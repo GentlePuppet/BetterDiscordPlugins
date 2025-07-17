@@ -316,60 +316,74 @@ module.exports = class {
             console.log('FullSizeAvatars: Updates are disabled.');
             return;
         }
-        if (config.EnableUpdates) {
-            console.log('FullSizeAvatars: Updates are Enabled')
-            require("request").get(defaultConfig.info.updateUrl, function (error, response, body) {
-                if (!error && response.statusCode === 200) {
-                    const updatedPluginContent = body;
-
-                    // Extract the version from the plugin content
-                    const match = updatedPluginContent.match(/version:\s*["'](\d+\.\d+\.\d+)["']/);
-                    const updatedVersion = match ? match[1] : null;
-
-                    // Check if the versions match
-                    if (defaultConfig.info.version !== updatedVersion) {
-                        if (config.SilentUpdates) {
-                            console.log('FullSizeAvatars: Silent Updates are enabled.');
-                            fs.writeFile(require("path").join(BdApi.Plugins.folder, "FullSizeAvatars.plugin.js"), updatedPluginContent, (err) => {
+    
+        console.log('FullSizeAvatars: Updates are Enabled');
+    
+        BdApi.Net.fetch(defaultConfig.info.updateUrl)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                return response.text();
+            })
+            .then(updatedPluginContent => {
+                // Extract the version from the plugin content
+                const match = updatedPluginContent.match(/version:\s*["'](\d+\.\d+\.\d+)["']/);
+                const updatedVersion = match ? match[1] : null;
+    
+                if (defaultConfig.info.version !== updatedVersion) {
+                    if (config.SilentUpdates) {
+                        console.log('FullSizeAvatars: Silent Updates are enabled.');
+                        require('fs').writeFile(require('path').join(BdApi.Plugins.folder, "FullSizeAvatars.plugin.js"), updatedPluginContent, (err) => {
+                            if (err) {
+                                console.error('FullSizeAvatars: Error writing updated file:', err);
+                            } else {
+                                console.log('FullSizeAvatars: Updated successfully.');
+                            }
+                        });
+                    } else {
+                        console.log('FullSizeAvatars: Silent Updates are disabled.');
+                        if (document.getElementById("FSAUpdateNotif")) {
+                            document.getElementById("FSAUpdateNotif").remove();
+                        }
+                        const UpdateNotif = document.createElement("div");
+                        const UpdateText = document.createElement("a");
+                        const CloseUpdate = document.createElement("a");
+                        const title = document.querySelector('body');
+    
+                        title.before(UpdateNotif);
+                        UpdateNotif.append(UpdateText);
+                        UpdateNotif.append(CloseUpdate);
+    
+                        UpdateNotif.setAttribute("id", "FSAUpdateNotif");
+                        UpdateNotif.setAttribute("style", "position: fixed;top: 20px;left: 50%;transform: translateX(-50%);background: white;color: black;padding: 10px 20px;border-radius: 5px;box-shadow: 0 0 10px rgba(0,0,0,0.3);z-index: 99999;display: flex;align-items: center;gap: 15px;font-size: 14px;");
+                        UpdateText.setAttribute("style", "text-decoration: underline;cursor: pointer;");
+                        CloseUpdate.setAttribute("style","cursor: pointer;font-weight: bold;");
+    
+                        UpdateText.textContent = `Click to update - ${config.info.name} ${updatedVersion} by ${config.info.author}`;
+                        CloseUpdate.textContent = "X";
+    
+                        UpdateText.addEventListener("click", () => {
+                            require('fs').writeFile(require('path').join(BdApi.Plugins.folder, "FullSizeAvatars.plugin.js"), updatedPluginContent, (err) => {
                                 if (err) {
                                     console.error('FullSizeAvatars: Error writing updated file:', err);
                                 } else {
                                     console.log('FullSizeAvatars: Updated successfully.');
                                 }
-                            })
-                        }
-                        else {
-                            console.log('FullSizeAvatars: Silent Updates are disabled.');
-                            if (document.getElementById("FSAUpdateNotif")) { document.getElementById("FSAUpdateNotif").remove(); }
-                            const UpdateNotif = document.createElement("div");
-                            const UpdateText = document.createElement("a");
-                            const CloseUpdate = document.createElement("a");
-                            const title = document.querySelector("#app-mount")
-                            title.before(UpdateNotif); UpdateNotif.append(UpdateText); UpdateNotif.append(CloseUpdate);
-                            UpdateNotif.setAttribute("id", "FSAUpdateNotif");
-                            UpdateNotif.setAttribute("style", "text-align: center; background: var(--brand-experiment); padding: 5px;");
-                            UpdateText.setAttribute("style", "color: white; text-decoration: underline;");
-                            CloseUpdate.setAttribute("style", "color: white; padding-left: 1%");
-                            UpdateText.textContent = "Click to update - Full Res Avatars On Hover";
-                            CloseUpdate.textContent = "X";
-                            UpdateText.addEventListener("click", () => {
-                                fs.writeFile(require("path").join(BdApi.Plugins.folder, "FullSizeAvatars.plugin.js"), updatedPluginContent, (err) => {
-                                    if (err) {
-                                        console.error('FullSizeAvatars: Error writing updated file:', err);
-                                    } else {
-                                        console.log('FullSizeAvatars: Updated successfully.');
-                                    }
-                                })
-                                UpdateNotif.remove()
                             });
-                            CloseUpdate.addEventListener("click", () => {
-                                UpdateNotif.remove()
-                            });
-                            return;
-                        }
-                    } else { console.log("FullSizeAvatars: Plugin is Up-to-date") }
-                } else { console.error('FullSizeAvatars: Error downloading update:', error) }
+                            UpdateNotif.remove();
+                        });
+    
+                        CloseUpdate.addEventListener("click", () => {
+                            UpdateNotif.remove();
+                        });
+    
+                        return;
+                    }
+                } else {
+                    console.log("FullSizeAvatars: Plugin is Up-to-date");
+                }
             })
-        }
+            .catch(error => {
+                console.error('FullSizeAvatars: Error downloading update:', error);
+            });
     }
 }
