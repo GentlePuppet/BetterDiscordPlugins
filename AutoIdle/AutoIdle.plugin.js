@@ -300,7 +300,7 @@ module.exports = class SimpleStatusOnFocus {
                         const UpdateNotif = document.createElement("div");
                         const UpdateText = document.createElement("a");
                         const CloseUpdate = document.createElement("a");
-                        const title = document.querySelector("#app-mount");
+                        const title = document.querySelector("body");
     
                         title.before(UpdateNotif);
                         UpdateNotif.append(UpdateText);
