@@ -2,11 +2,11 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.0.2
+ * @version 5.0.4
  * @description Hover over avatars to see a bigger version.
- * @website https://github.com/GentlePuppet/FullResAvatar.plugin.js/
- * @source https://raw.githubusercontent.com/GentlePuppet/FullResAvatar.plugin.js/main/FullSizeAvatars.plugin.js
- * @updateUrl https://raw.githubusercontent.com/GentlePuppet/FullResAvatar.plugin.js/main/FullSizeAvatars.plugin.js
+ * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
+ * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
+ * @updateUrl https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
  */
 
 /*@cc_on
@@ -44,8 +44,8 @@ const defaultConfig = {
     info: {
         name: "Full Res Avatars On Hover",
         id: "FullSizeAvatars",
-        version: "5.0.1",
-        updateUrl: "https://raw.githubusercontent.com/GentlePuppet/FullResAvatar.plugin.js/main/FullSizeAvatars.plugin.js",
+        version: "5.0.4",
+        updateUrl: "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js",
     }
 };
 
