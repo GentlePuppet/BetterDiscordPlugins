@@ -45,7 +45,7 @@ const defaultConfig = {
         name: "Full Res Avatars On Hover",
         id: "FullSizeAvatars",
         version: "5.0.4",
-        author: "Gentle Puppet"
+        author: "Gentle Puppet",
         updateUrl: "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js",
     }
 };
