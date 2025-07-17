@@ -8,6 +8,28 @@
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js
 **/
 
+/*@cc_on
+@if (@_jscript)
+    
+    // Offer to help install for users who open the file directly.
+    var shell = WScript.CreateObject("WScript.Shell");
+    var AXO = new ActiveXObject("Scripting.FileSystemObject");
+    var PluginPath = shell.ExpandEnvironmentStrings("%APPDATA%\\BetterDiscord\\plugins");
+    
+    // Inform the user that they need to manually install the plugin.
+    shell.Popup("It looks like you've tried to run the plugin directly. \nPlease never do that! \nPlease place this plugin file into the BetterDiscord plugins folder.", 0, "This is a BetterDiscord Plugin", 0x30);
+    
+    // Open the BetterDiscord plugins folder in File Explorer.
+    if (AXO.FolderExists(PluginPath)) {
+        shell.Exec("explorer " + PluginPath);
+        shell.Popup("The BetterDiscord plugins folder has been opened. Please place the plugin file there.", 0, "Manual Install Instructions", 0x40);
+    } else {
+        shell.Popup("The BetterDiscord plugins folder couldn't be found. \nAre you sure BetterDiscord is installed?", 0, "Plugin Folder Missing", 0x10);
+    }
+    WScript.Quit();
+
+@else@*/
+
 const { Webpack, UI, Data, Logger } = BdApi;
 const UserSettingsProtoStore = Webpack.getStore("UserSettingsProtoStore");
 const UserSettingsProtoUtils = Webpack.getModule(m => m.ProtoClass && m.ProtoClass.typeName.endsWith(".PreloadedUserSettings"), { first: true, searchExports: true });
