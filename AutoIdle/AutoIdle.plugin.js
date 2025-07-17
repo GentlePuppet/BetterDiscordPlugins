@@ -307,9 +307,9 @@ module.exports = class SimpleStatusOnFocus {
                         UpdateNotif.append(CloseUpdate);
     
                         UpdateNotif.setAttribute("id", UpdateDivStr);
-                        UpdateNotif.setAttribute("style", "text-align: center; background: var(--brand-experiment); padding: 5px;");
-                        UpdateText.setAttribute("style", "color: white; text-decoration: underline;");
-                        CloseUpdate.setAttribute("style", "color: white; padding-left: 1%");
+                        UpdateNotif.setAttribute("style", "position: fixed;top: 20px;left: 50%;transform: translateX(-50%);background: white;color: black;padding: 10px 20px;border-radius: 5px;box-shadow: 0 0 10px rgba(0,0,0,0.3);z-index: 99999;display: flex;align-items: center;gap: 15px;font-size: 14px;");
+                        UpdateText.setAttribute("style", "text-decoration: underline;cursor: pointer;");
+                        CloseUpdate.setAttribute("style","cursor: pointer;font-weight: bold;");
     
                         UpdateText.textContent = `Click to update - ${this._config.info.name} ${updatedVersion} by ${this._config.info.author}`;
                         CloseUpdate.textContent = "X";
