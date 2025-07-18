@@ -11,6 +11,14 @@ A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a h
 
 <br>
 
+## Supports
+- Server member list
+- Friends list
+- DM messages list
+- Chat messages (Both default and compact)
+
+<br>
+
 ## Settings
 
 | Setting               | Description                                                                | Default   |
@@ -23,7 +31,7 @@ A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a h
 <img width="537" height="312" alt="image" src="https://github.com/user-attachments/assets/a4596bce-5def-4e83-9c0c-28d213926d00" />
 
 Settings are manually saved in a JSON file (`FullResAvatars.Config.json`) inside the plugin folder.\
-> I didn't know how to use the BD settings panel, when I first made this, so I made my own.\
+> When I first made this plugin I didn't know how to use the BD settings panel, so I created my own and inserted it onto the BD panel that opens.\
 > I don't want to change it now, it still works fine.
 
 <br>
@@ -32,10 +40,3 @@ Settings are manually saved in a JSON file (`FullResAvatars.Config.json`) inside
 1. Download the [FullSizeAvatars.plugin.js](https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js) file.
 2. Place it in your BetterDiscord plugins folder.
 3. Enable the plugin in BetterDiscord’s plugin settings.
-
-<br>
-
-## Supports
-- Server member list
-- Friends list
-- DM messages list
