@@ -32,7 +32,7 @@ A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a h
 
 Settings are manually saved in a JSON file (`FullResAvatars.Config.json`) inside the plugin folder.\
 > When I first made this plugin I didn't know how to use the BD settings panel, so I created my own and inserted it onto the BD panel that opens.\
-> I don't want to change it now, it still works fine.
+> I don't want to change it now and break compatibility for anyone using it currently, it works fine anyways.
 
 <br>
 
