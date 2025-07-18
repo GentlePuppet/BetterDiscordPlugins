@@ -8,8 +8,6 @@
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js
 **/
 
-
-const version = "0.8.2"
 const changelog = {
     "0.8.2": [
         "Added a changelog!"
@@ -42,7 +40,7 @@ const config = {
     info: {
         name: "AutoIdle",
         author: "Gentle Puppet",
-        version: version,
+        version: "0.8.2",
         description: "Automatically change you status between Idle and Online when switching from and to Discord.",
         source: "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js"
     },
