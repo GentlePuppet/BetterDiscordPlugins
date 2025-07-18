@@ -11,11 +11,11 @@ A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a h
 
 <br>
 
-## Supports
-- Server member list
-- Friends list
-- DM messages list
-- Chat messages (Both default and compact)
+## Supports The Following Avatars
+- Server Members List
+- Friends List
+- DM Messages List
+- Chat Messages (Both default and compact if avatars are shown)
 
 <br>
 
