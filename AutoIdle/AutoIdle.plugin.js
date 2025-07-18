@@ -3,32 +3,10 @@
  * @author GentlePuppet
  * @authorId 199263542833053696
  * @description Sets status to online when actively using discord and back to idle after clicking off. If you are in a voice call it will not change to idle. It will also not change your status if you have Invisible or DND enabled.
- * @version 0.8.0
+ * @version 0.8.1
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js
 **/
-
-/*@cc_on
-@if (@_jscript)
-    
-    // Offer to help install for users who open the file directly.
-    var shell = WScript.CreateObject("WScript.Shell");
-    var AXO = new ActiveXObject("Scripting.FileSystemObject");
-    var PluginPath = shell.ExpandEnvironmentStrings("%APPDATA%\\BetterDiscord\\plugins");
-    
-    // Inform the user that they need to manually install the plugin.
-    shell.Popup("It looks like you've tried to run the plugin directly. \nPlease never do that! \nPlease place this plugin file into the BetterDiscord plugins folder.", 0, "This is a BetterDiscord Plugin", 0x30);
-    
-    // Open the BetterDiscord plugins folder in File Explorer.
-    if (AXO.FolderExists(PluginPath)) {
-        shell.Exec("explorer " + PluginPath);
-        shell.Popup("The BetterDiscord plugins folder has been opened. Please place the plugin file there.", 0, "Manual Install Instructions", 0x40);
-    } else {
-        shell.Popup("The BetterDiscord plugins folder couldn't be found. \nAre you sure BetterDiscord is installed?", 0, "Plugin Folder Missing", 0x10);
-    }
-    WScript.Quit();
-
-@else@*/
 
 const { Webpack, UI, Data, Logger } = BdApi;
 const UserSettingsProtoStore = Webpack.getStore("UserSettingsProtoStore");
@@ -39,7 +17,7 @@ const config = {
     info: {
         name: "AutoIdle",
         author: "Gentle Puppet",
-        version: "0.8.0",
+        version: "0.8.1",
         description: "Automatically change you status between Idle and Online when switching from and to Discord.",
         source: "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js"
     },
@@ -299,20 +277,41 @@ module.exports = class SimpleStatusOnFocus {
     
                         const UpdateNotif = document.createElement("div");
                         const UpdateText = document.createElement("a");
+                        const SeperatorText = document.createElement("span");
                         const CloseUpdate = document.createElement("a");
                         const title = document.querySelector("body");
     
                         title.before(UpdateNotif);
                         UpdateNotif.append(UpdateText);
+                        UpdateNotif.append(SeperatorText);
                         UpdateNotif.append(CloseUpdate);
     
                         UpdateNotif.setAttribute("id", UpdateDivStr);
-                        UpdateNotif.setAttribute("style", "position: fixed;top: 20px;left: 50%;transform: translateX(-50%);background: white;color: black;padding: 10px 20px;border-radius: 5px;box-shadow: 0 0 10px rgba(0,0,0,0.3);z-index: 99999;display: flex;align-items: center;gap: 15px;font-size: 14px;");
-                        UpdateText.setAttribute("style", "text-decoration: underline;cursor: pointer;");
-                        CloseUpdate.setAttribute("style","cursor: pointer;font-weight: bold;");
+                        
+                        UpdateNotif.setAttribute("style", `position: fixed; top: 20px; left: 50%;
+                                                           transform: translateX(-50%); background: var(--brand-500);
+                                                           color: var(--white); padding: 10px 20px; border-radius: 8px;
+                                                           box-shadow: var(--elevation-low); z-index: 99999;
+                                                           display: flex; align-items: center; gap: 15px;
+                                                `);
+                        
+                        UpdateText.setAttribute("style", `cursor: pointer; color: var(--white) !important;
+                                                          font-family: inherit; font-size: 100%;
+                                                          font-style: inherit; font-weight: inherit;
+                                                          text-shadow: 1px 1px 2px black !important;
+                                                `);
+                        
+                        SeperatorText.setAttribute("style", "color: var(--white) !important;");
+
+                        CloseUpdate.setAttribute("style", `cursor: pointer; font-family: inherit; 
+                                                           font-size: 100%; font-style: inherit;
+                                                           font-weight: bold; color: var(--white) !important;
+                                                           text-shadow: 1px 1px 2px black !important;
+                                                `);
     
                         UpdateText.textContent = `Click to update - ${this._config.info.name} ${updatedVersion} by ${this._config.info.author}`;
-                        CloseUpdate.textContent = "X";
+                        SeperatorText.textContent = " | ";
+                        CloseUpdate.textContent = `Don't Update - ${this._config.info.version}`;
     
                         UpdateText.addEventListener("click", () => {
                             require("fs").writeFile(require("path").join(BdApi.Plugins.folder, this._config.main), updatedPluginContent, (err) => {
