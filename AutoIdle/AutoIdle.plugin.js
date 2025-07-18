@@ -3,13 +3,16 @@
  * @author Gentle Puppet
  * @authorId 199263542833053696
  * @description Sets status to online when actively using discord and back to idle after clicking off. If you are in a voice call it will not change to idle. It will also not change your status if you have Invisible or DND enabled.
- * @version 0.8.2
+ * @version 0.8.3
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js
 **/
 
-const version = "0.8.2"
+const version = "0.8.3"
 const changelog = {
+    "0.8.3": [
+        "Fixed the changelog button being added multiple times."
+    ],
     "0.8.2": [
         "Added a changelog!"
     ],
@@ -41,7 +44,7 @@ const config = {
     info: {
         name: "AutoIdle",
         author: "Gentle Puppet",
-        version: "0.8.2",
+        version: version,
         description: "Automatically change you status between Idle and Online when switching from and to Discord.",
         source: "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js"
     },
@@ -199,13 +202,19 @@ module.exports = class SimpleStatusOnFocus {
                 setting.value = this.settings[setting.id];
             }
         }
-        this._config.settingsPanel.unshift({
-            type: "button",
-            id: "showChangelogButton",
-            name: "View Changelog",
-            children: "View Changelog",
-            onClick: () => this.showChangelog()
-        });
+        const hasChangelogButton = this._config.settingsPanel.some(
+            setting => setting.id === "showChangelogButton"
+        );
+    
+        if (!hasChangelogButton) {
+            this._config.settingsPanel.unshift({
+                type: "button",
+                id: "showChangelogButton",
+                name: "View Changelog",
+                children: "View Changelog",
+                onClick: () => this.showChangelog()
+            });
+        }
         return UI.buildSettingsPanel({
             settings: this._config.settingsPanel,
             onChange: (category, id, value) => {
