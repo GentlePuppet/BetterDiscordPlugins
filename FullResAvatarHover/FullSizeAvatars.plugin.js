@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.0.4
+ * @version 5.0.5
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -44,7 +44,7 @@ const defaultConfig = {
     info: {
         name: "Full Res Avatars On Hover",
         id: "FullSizeAvatars",
-        version: "5.0.4",
+        version: "5.0.5",
         author: "Gentle Puppet",
         updateUrl: "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js",
     }
@@ -347,20 +347,42 @@ module.exports = class {
                         }
                         const UpdateNotif = document.createElement("div");
                         const UpdateText = document.createElement("a");
+                        const SeperatorText = document.createElement("span");
                         const CloseUpdate = document.createElement("a");
                         const title = document.querySelector('body');
     
                         title.before(UpdateNotif);
                         UpdateNotif.append(UpdateText);
+                        UpdateNotif.append(SeperatorText);
                         UpdateNotif.append(CloseUpdate);
     
                         UpdateNotif.setAttribute("id", "FSAUpdateNotif");
-                        UpdateNotif.setAttribute("style", "position: fixed;top: 20px;left: 50%;transform: translateX(-50%);background: white;color: black;padding: 10px 20px;border-radius: 5px;box-shadow: 0 0 10px rgba(0,0,0,0.3);z-index: 99999;display: flex;align-items: center;gap: 15px;font-size: 14px;");
-                        UpdateText.setAttribute("style", "text-decoration: underline;cursor: pointer;");
-                        CloseUpdate.setAttribute("style","cursor: pointer;font-weight: bold;");
+                        
+                        UpdateNotif.setAttribute("style", `position: fixed; top: 20px; left: 50%;
+                                                           transform: translateX(-50%); background: var(--brand-500);
+                                                           color: var(--white); padding: 10px 20px; border-radius: 8px;
+                                                           box-shadow: var(--elevation-low); z-index: 99999;
+                                                           display: flex; align-items: center; gap: 15px;
+                                                `);
+                        
+                        UpdateText.setAttribute("style", `cursor: pointer; color: var(--white) !important;
+                                                          font-family: inherit; font-size: 100%;
+                                                          font-style: inherit; font-weight: inherit;
+                                                          text-shadow: 1px 1px 2px black !important;
+                                                `);
+                        
+                        SeperatorText.setAttribute("style", "color: var(--white) !important;");
+
+                        CloseUpdate.setAttribute("style", `cursor: pointer; font-family: inherit; 
+                                                           font-size: 100%; font-style: inherit;
+                                                           font-weight: bold; color: var(--white) !important;
+                                                           text-shadow: 1px 1px 2px black !important;
+                                                `);
     
-                        UpdateText.textContent = `Click to update - ${config.info.name} ${updatedVersion} by ${config.info.author}`;
-                        CloseUpdate.textContent = "X";
+                        UpdateText.textContent = `Click to update - ${defaultConfig.info.name} ${updatedVersion} by ${defaultConfig.info.author}`;
+                        SeperatorText.textContent = " | ";
+                        CloseUpdate.textContent = `Don't Update - ${defaultConfig.info.version}`;
+
     
                         UpdateText.addEventListener("click", () => {
                             require('fs').writeFile(require('path').join(BdApi.Plugins.folder, "FullSizeAvatars.plugin.js"), updatedPluginContent, (err) => {
