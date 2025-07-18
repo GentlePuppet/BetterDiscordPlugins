@@ -1,12 +1,37 @@
 /**
  * @name AutoIdle
- * @author GentlePuppet
+ * @author Gentle Puppet
  * @authorId 199263542833053696
  * @description Sets status to online when actively using discord and back to idle after clicking off. If you are in a voice call it will not change to idle. It will also not change your status if you have Invisible or DND enabled.
- * @version 0.8.1
+ * @version 0.8.2
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js
 **/
+
+
+const version = "0.8.2"
+const changelog = {
+    "0.8.2": [
+        "Added a changelog!"
+    ],
+    "0.8.1": [
+        "Made the Update Notification Prettier~"
+    ],
+    "0.8.0": [
+        "Re-Added an Update Checker. (I fixed it.)"
+    ],
+    "0.7.0": [
+        "Rolled back the Update Checker (It didn't work, woops)."
+    ],
+    "0.6.0": [
+        "Added an Update Checker."
+    ],
+    "0.5.0": [
+        "Plugin Released on my Github!",
+        "Added lots of additional options to the settings for more fine tuned control.",
+        "Pre-release use to only switch between Online and Idle with a 5 second delay."
+    ]
+};
 
 const { Webpack, UI, Data, Logger } = BdApi;
 const UserSettingsProtoStore = Webpack.getStore("UserSettingsProtoStore");
@@ -17,7 +42,7 @@ const config = {
     info: {
         name: "AutoIdle",
         author: "Gentle Puppet",
-        version: "0.8.1",
+        version: version,
         description: "Automatically change you status between Idle and Online when switching from and to Discord.",
         source: "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js"
     },
@@ -94,7 +119,7 @@ const config = {
             type: "switch",
             id: "EnableUpdateCheck",
             name: "Enable Update Check",
-            note: "Allow the plugin to check for updates when started.",
+            note: "Allow the plugin to check for updates directly from github when started.",
             value: true
         },
         {
@@ -157,6 +182,8 @@ module.exports = class SimpleStatusOnFocus {
         window.addEventListener("blur", this.boundOnBlur);
 
         this.CheckifUpdate();
+
+        if ((BdApi.loadData(this._config.info.name, "shownVersion") != this._config.info.version)) this.showChangelog();
     }
 
     stop() {
@@ -173,6 +200,13 @@ module.exports = class SimpleStatusOnFocus {
                 setting.value = this.settings[setting.id];
             }
         }
+        this._config.settingsPanel.unshift({
+            type: "button",
+            id: "showChangelogButton",
+            name: "View Changelog",
+            children: "View Changelog",
+            onClick: () => this.showChangelog()
+        });
         return UI.buildSettingsPanel({
             settings: this._config.settingsPanel,
             onChange: (category, id, value) => {
@@ -226,6 +260,43 @@ module.exports = class SimpleStatusOnFocus {
         });
     }
     
+    showChangelog() {
+
+        const modalContent = [];
+
+        modalContent.push(`[View Source on GitHub](${this._config.info.source})`);
+        modalContent.push("━━━━━━━━━━━━━━━━━━━━");
+        modalContent.push("");
+
+        const versions = Object.keys(changelog);
+        versions.forEach((version, i) => {
+            if (i !== 0) {
+                modalContent.push("");
+                modalContent.push("━━━━━━━━━━━━━━━━━━━━");
+                modalContent.push("");
+            }
+        
+            const isLatest = version === this._config.info.version
+            const versionLabel = isLatest ? `**Latest Version: ${version}**` : `*${version}*`;
+            modalContent.push(versionLabel);
+            
+            changelog[version].forEach(change => {
+                modalContent.push(isLatest ? `- ${change}` : `*– ${change}*`); // dim each line too
+            });
+        });
+
+        BdApi.showConfirmationModal(
+            `What Changed in ${this._config.info.name} v${this._config.info.version}`,
+            modalContent,
+            {
+                confirmText: "Got it!",
+                cancelText: null
+            }
+        );
+
+        BdApi.saveData(this._config.info.name, "shownVersion", this._config.info.version);
+    }
+
     CheckifUpdate() {
         if (!this.settings.EnableUpdateCheck) {
             Logger.info(this._config.info.name + ': Updates are disabled.');
