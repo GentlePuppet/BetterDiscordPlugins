@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.0.5
+ * @version 5.1.0
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -44,7 +44,7 @@ const defaultConfig = {
     info: {
         name: "Full Res Avatars On Hover",
         id: "FullSizeAvatars",
-        version: "5.0.5",
+        version: "5.1.0",
         author: "Gentle Puppet",
         updateUrl: "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js",
     }
@@ -256,6 +256,10 @@ module.exports = class {
         let fah = container.querySelector('[class^="link"] > [class^="layout"] > [class^="avatar"]:hover')
         // Friends DM List
         let fadmh = container.querySelector('[class^="listItemContents"] > [class^="userInfo"] > [class*="avatar"]:hover')
+        // Avatar next to Compact Messages
+        let ccah = container.querySelector('h3[aria-labelledby*="message-username"] > img[class*="avatar"]:hover')
+        // Avatar next to Default Messages
+        let dcah = container.querySelector('[class*="message"] > [class*="contents"] > img[class*="avatar"]:hover')
         // Larger Avatar Popup
         let ipm = document.querySelector("#IPH")
         let dih = (e.pageY / (container.offsetHeight) * 100);
@@ -283,10 +287,14 @@ module.exports = class {
             statusElm = null
         }
 
-        if (!mah && !fah && !fadmh) {
+        if (!mah && !fah && !fadmh && !ccah && !dcah) {
             ipm.style.display = "none";
         } else {
-            var ais = container.querySelector("div:hover > div > svg > foreignObject > div > img").src.replace(/\?size=\d+/g, '?size=' + config.imagesize);
+            if (ccah || dcah) {
+                var ais = container.querySelector('img[class*="avatar"]:hover').src.replace(/\?size=\d+/g, '?size=' + config.imagesize);
+            } else {
+                var ais = container.querySelector("div:hover > div > svg > foreignObject > div > img").src.replace(/\?size=\d+/g, '?size=' + config.imagesize);
+            }
             
             ipm.src = ais;
             ipm.style.display = "block";
@@ -297,8 +305,10 @@ module.exports = class {
 
             if (diw >= 50) { ipm.style.left = e.pageX - config.panelsize - 30 + 'px' }
             else { ipm.style.left = e.pageX + 30 + 'px'; }
-
-            if (!statusElm) {
+            if (ccah || dcah) {
+                ipm.style.background = "transparent";
+                ipm.style.filter = "opacity(1)";
+            } else if (!statusElm) {
                 ipm.style.background = "transparent";
                 ipm.style.filter = "opacity(0.4)";
             } else if (status == "transparent") {
