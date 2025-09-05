@@ -33,7 +33,7 @@ This plugin automatically manages your Discord status by switching between chose
 - Configurable **delays** for switching to Online and Idle statuses.
 - Option to **ignore voice calls, allowing the plugin to change status during a call**.
 - Options to **allow status changes even if DND or Invisible are active**.
-- Built-in **update checker** with silent update support.
+- Built-in **update checker** with silent update support. (Silent Updates are Disabled by Default)
 - User-friendly settings panel with sliders, switches, and dropdowns.
 
 ---
