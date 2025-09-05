@@ -1,6 +1,7 @@
 # BetterDiscordPlugins
 This is where I store the plugins I make for BetterDiscord.\
 I mainly make these for my own use, but you are welcome to use them too.
+Click the links for more detailed info for each plugin.
 
 # [Auto Idle](https://github.com/GentlePuppet/BetterDiscordPlugins/blob/main/AutoIdle)
 > AutoIdle is a simple plugin that automatically changes your status based on your Discord activity.
