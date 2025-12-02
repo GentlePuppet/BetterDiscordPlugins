@@ -3,13 +3,16 @@
  * @author Gentle Puppet
  * @authorId 199263542833053696
  * @description Sets status to online when actively using discord and back to idle after clicking off. If you are in a voice call it will not change to idle. It will also not change your status if you have Invisible or DND enabled.
- * @version 0.8.3
+ * @version 0.8.4
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js
 **/
 
-const version = "0.8.3"
+const version = "0.8.4"
 const changelog = {
+    "0.8.4": [
+        "Updated for BD 1.13.0."
+    ],
     "0.8.3": [
         "Fixed the changelog button being added multiple times."
     ],
@@ -185,7 +188,7 @@ module.exports = class SimpleStatusOnFocus {
 
         this.CheckifUpdate();
 
-        if ((BdApi.loadData(this._config.info.name, "shownVersion") != this._config.info.version)) this.showChangelog();
+        if ((BdApi.Data.load(this._config.info.name, "shownVersion") != this._config.info.version)) this.showChangelog();
     }
 
     stop() {
