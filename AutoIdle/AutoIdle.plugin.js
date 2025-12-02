@@ -11,7 +11,7 @@
 const version = "0.8.4"
 const changelog = {
     "0.8.4": [
-        "Updated for BD 1.13.0."
+        "Replaced Deprecated functions: saveData with Data.save and loadData with Data.load"
     ],
     "0.8.3": [
         "Fixed the changelog button being added multiple times."
