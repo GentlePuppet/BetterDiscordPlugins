@@ -1,8 +1,8 @@
 # Full Res Hover Avatars 
-<img align="left" width="202" height="181" alt="image" src="https://user-images.githubusercontent.com/43224790/190882375-d12af1b8-637f-4d15-a2bd-79e7d2a63d53.png" /><img align="right" width="202" height="181" alt="image" src="https://github.com/user-attachments/assets/36be1b80-b728-429a-b5f4-0a1d89d010f0" />
-A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a higher-resolution version in a floating panel, with the border around the avatar being their current status. <br><br>Perfect for getting a clearer look at profile pictures without needing to open the profile popup.
-
-
+<img align="left" width="202" alt="image" src="https://user-images.githubusercontent.com/43224790/190882375-d12af1b8-637f-4d15-a2bd-79e7d2a63d53.png" /><img align="right" width="202" alt="image" src="https://github.com/user-attachments/assets/db7cc559-3bc6-434f-9b6d-4aa73a3320a7" />
+A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a higher-resolution version in a floating panel, with the border around the avatar being their current status.\
+<br>Perfect for getting a clearer look at profile pictures without needing to open the profile popup.\
+<br>Includes an option to display Avatar Decorations →
 
 <br><br><br>
 <br><br>
