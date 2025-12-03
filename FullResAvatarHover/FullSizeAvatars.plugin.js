@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.1.1
+ * @version 5.1.2
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -45,7 +45,7 @@ const defaultConfig = {
     info: {
         name: "Full Res Avatars On Hover",
         id: "FullSizeAvatars",
-        version: "5.1.1",
+        version: "5.1.2",
         author: "Gentle Puppet",
         updateUrl: "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js",
     }
@@ -91,11 +91,11 @@ module.exports = class {
 
         ip.setAttribute("id", "IPH");
         ip.setAttribute("class", "IPH");
-        ip.setAttribute("style", "height:" + Number(config.panelsize + 5) + "px;width:" + Number(config.panelsize + 5) + "px;padding:5px;display:none;z-index:999999;position:absolute;transition: top 0.1s ease;");
+        ip.setAttribute("style", "display:none;height:" + Number(config.panelsize + 5) + "px;width:" + Number(config.panelsize + 5) + "px;padding:5px;z-index:999999;position:absolute;pointer-events:none;transition: top 0.1s ease;");
 
         dp.setAttribute("id", "IPH");
         dp.setAttribute("class", "DPH");
-        dp.setAttribute("style", "height:" + Number(config.panelsize + 5) + "px;width:" + Number(config.panelsize + 5) + "px;padding:5px;display:none;z-index:9999999;position:absolute;transition: top 0.1s ease;");
+        dp.setAttribute("style", "display:none;height:" + Number(config.panelsize + 65) + "px;width:" + Number(config.panelsize + 65) + "px;margin: 0px 0px -15px -15px;padding:5px;z-index:9999999;position:absolute;pointer-events:none;transition: top 0.1s ease;");
 
         document.body.after(dp);
         dp.after(ip);
@@ -107,155 +107,168 @@ module.exports = class {
     }
 
     getSettingsPanel() {
+        // Load config from file
         const configFileData = fs.readFileSync(configFile, "utf-8");
         const savedConfig = JSON.parse(configFileData);
         config = { ...defaultConfig, ...savedConfig };
-
-        // Create the settings panel container
+    
+        // Root container
         this.settingsPanel = document.createElement("div");
-        this.settingsPanel.setAttribute("id", "settings-panel");
-        this.settingsPanel.setAttribute("style", "display:grid; padding: 20px; z-index: 1000;");
-
-        // Grid container for the settings
-        const gridContainer = document.createElement("div");
-        gridContainer.setAttribute("style", "color: var(--header-primary); display: grid; grid-template-columns: 1fr 1fr; gap: 10px;");
-
-        // Create input fields and labels
-        const enableUpdatesLabel = document.createElement("label");
-        enableUpdatesLabel.textContent = "Enable Updates";
-        const enableUpdatesInput = document.createElement("input");
-        enableUpdatesInput.setAttribute("type", "checkbox");
-        enableUpdatesInput.checked = config.EnableUpdates === 1;
-
-        const silentUpdatesLabel = document.createElement("label");
-        silentUpdatesLabel.textContent = "Silent Updates";
-        const silentUpdatesInput = document.createElement("input");
-        silentUpdatesInput.setAttribute("type", "checkbox");
-        silentUpdatesInput.checked = config.SilentUpdates === 1;
-
-        const enableDecorationsLabel = document.createElement("label");
-        enableDecorationsLabel.textContent = "Display Avatar Decorations";
-        const enableDecorationsInput = document.createElement("input");
-        enableDecorationsInput.setAttribute("type", "checkbox");
-        enableDecorationsInput.checked = config.decoration === 1;
-
-        const imageSizeLabel = document.createElement("label");
-        imageSizeLabel.textContent = "Avatar Resolution";
-        const imageSizeInput = document.createElement("input");
-        imageSizeInput.setAttribute("type", "number");
-        imageSizeInput.value = config.imagesize;
-
-        const panelSizeLabel = document.createElement("label");
-        panelSizeLabel.textContent = "Avatar Panel Size";
-        const panelSizeInput = document.createElement("input");
-        panelSizeInput.setAttribute("type", "number");
-        panelSizeInput.value = config.panelsize;
-
-        // Append elements to grid container
-        gridContainer.appendChild(enableUpdatesLabel);
-        gridContainer.appendChild(enableUpdatesInput);
-        gridContainer.appendChild(silentUpdatesLabel);
-        gridContainer.appendChild(silentUpdatesInput);
-        gridContainer.appendChild(enableDecorationsLabel);
-        gridContainer.appendChild(enableDecorationsInput);
-        gridContainer.appendChild(imageSizeLabel);
-        gridContainer.appendChild(imageSizeInput);
-        gridContainer.appendChild(panelSizeLabel);
-        gridContainer.appendChild(panelSizeInput);
-
-        // Append grid container to settings panel
-        this.settingsPanel.appendChild(gridContainer);
-
+        this.settingsPanel.id = "settings-panel";
+        this.settingsPanel.style.cssText = `
+            padding: 20px;
+            display: flex;
+            font-size: 14px;
+            color: var(--header-primary);
+        `;
+    
+        // Grid container
+        const grid = document.createElement("div");
+        grid.style.cssText = `
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px 20px;
+            background: var(--background-secondary);
+            padding: 20px;
+            border-radius: 8px;
+        `;
+    
+        // Helper to build labeled inputs 
+        const addSetting = (labelText, inputElement) => {
+            const label = document.createElement("label");
+            label.textContent = labelText;
+            label.style.cssText = `
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 500;
+            `;
+    
+            inputElement.style.marginLeft = "auto";
+            label.appendChild(inputElement);
+            grid.appendChild(label);
+        };
+    
+        // Toggle inputs
+        const makeToggle = (checked) => {
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.checked = checked;
+            input.style.cursor = "pointer";
+            return input;
+        };
+    
+        // Number inputs
+        const makeNumber = (value) => {
+            const input = document.createElement("input");
+            input.type = "number";
+            input.value = value;
+            input.style.cssText = `
+                width: 80px;
+                padding: 4px;
+                border-radius: 4px;
+                border: 1px solid var(--background-tertiary);
+                background: var(--background-primary);
+                color: var(--header-primary);
+            `;
+            return input;
+        };
+    
+        // Build UI fields
+        const enableUpdatesInput     = makeToggle(config.EnableUpdates === 1);
+        const silentUpdatesInput     = makeToggle(config.SilentUpdates === 1);
+        const enableDecorationsInput = makeToggle(config.decoration === 1);
+    
+        const imageSizeInput = makeNumber(config.imagesize);
+        const panelSizeInput = makeNumber(config.panelsize);
+    
+        addSetting("Enable Updates", enableUpdatesInput);
+        addSetting("Silent Updates", silentUpdatesInput);
+        addSetting("Display Avatar Decorations", enableDecorationsInput);
+        addSetting("Avatar Resolution", imageSizeInput);
+        addSetting("Avatar Panel Size", panelSizeInput);
+    
+        this.settingsPanel.appendChild(grid);
+    
         // Wait for the .bd-modal-content to exist and insert our settings panel
-        const observer = new MutationObserver((mutationsList) => {
-            for (const mutation of mutationsList) {
-                if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-                    const modalContent = document.querySelector(".bd-modal-content");
-                    if (modalContent) {
-                        // Insert the settings panel inside the modal content
-                        modalContent.appendChild(this.settingsPanel);
-
-                        // Remove backdrop click event to prevent accidental closing
-                        const backdrop = document.querySelector('[class*="backdrop"]');
-                        if (backdrop) backdrop.removeEventListener("click");
-
-                        // Manually create a save button in the footer
-                        const modalFooter = document.querySelector('.bd-addon-modal > [class*="footer-"]') || document.createElement("div");
-                        modalFooter.setAttribute("style", "display: flex; justify-content: flex-end; padding: 10px;");
-
-                        const saveButton = document.createElement("button");
-                        saveButton.textContent = "Save";
-                        saveButton.setAttribute("style", "padding: 5px 15px; background: #3e82e5; color: white; border: none; cursor: pointer; border-radius: 4px;");
-
-                        saveButton.addEventListener("click", (event) => {
-                            // Update config settings with input values
-                            config.EnableUpdates = enableUpdatesInput.checked ? 1 : 0;
-                            config.SilentUpdates = silentUpdatesInput.checked ? 1 : 0;
-                            config.decoration = enableDecorationsInput.checked ? 1 : 0;
-                            config.imagesize = parseInt(imageSizeInput.value);
-                            config.panelsize = parseInt(panelSizeInput.value);
-                            const ip = document.querySelector("img.IPH");
-                            const dp = document.querySelector("img.DPH");
-                            if (ip) {
-                                ip.style.height = `${config.panelsize + 5}px`;
-                                ip.style.width  = `${config.panelsize + 5}px`;
-                            }
-                            if (dp) {
-                                dp.style.height = `${config.panelsize + 5}px`;
-                                dp.style.width  = `${config.panelsize + 5}px`;
-                            }
-
-                            // Save the updated config to the JSON file
-                            this.saveConfigToFile();
-
-                            // Get mouse position
-                            const mouseX = event.clientX;
-                            const mouseY = event.clientY;
-
-                            // Create a small popup notification
-                            const toast = document.createElement("div");
-                            toast.textContent = "Settings saved!";
-                            toast.setAttribute("style", `
-                                position: absolute;
-                                left: ${mouseX + 10}px;
-                                top: ${mouseY - 30}px;
-                                background: rgba(0, 0, 0, 0.8);
-                                color: white;
-                                padding: 8px 12px;
-                                border-radius: 5px;
-                                font-size: 14px;
-                                z-index: 9999;
-                                opacity: 1;
-                                pointer-events: none;
-                                transition: opacity 0.5s ease-out, transform 0.3s ease-out;
-                            `);
-
-                            document.body.appendChild(toast);
-
-                            // Animate the toast moving slightly upward and fading out
-                            setTimeout(() => {
-                                toast.style.transform = "translateY(-10px)";
-                                toast.style.opacity = "0";
-                                setTimeout(() => toast.remove(), 500);
-                            }, 1500);
-                        });
-
-
-                        // Append save button if not already present
-                        if (!modalFooter.contains(saveButton)) {
-                            modalFooter.appendChild(saveButton);
-                            modalContent.appendChild(modalFooter);
-                        }
-
-                        observer.disconnect();
-                        break;
-                    }
+        const observer = new MutationObserver(() => {
+            const modalContent = document.querySelector(".bd-modal-content");
+            if (!modalContent) return;
+    
+            modalContent.appendChild(this.settingsPanel);
+    
+            // Footer
+            const modalFooter = document.querySelector('.bd-addon-modal [class*="footer-"]');
+            const saveButton = document.createElement("button");
+    
+            saveButton.textContent = "Save";
+            saveButton.style.cssText = `
+                padding: 6px 16px;
+                background: var(--brand-500);
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 4px;
+                font-size: 14px;
+            `;
+    
+            saveButton.addEventListener("click", (event) => {
+                // Update config values
+                config.EnableUpdates = enableUpdatesInput.checked ? 1 : 0;
+                config.SilentUpdates = silentUpdatesInput.checked ? 1 : 0;
+                config.decoration   = enableDecorationsInput.checked ? 1 : 0;
+                config.imagesize    = parseInt(imageSizeInput.value);
+                config.panelsize    = parseInt(panelSizeInput.value);
+    
+                // Update panel sizes instantly
+                const ip = document.querySelector("img.IPH");
+                const dp = document.querySelector("img.DPH");
+    
+                if (ip) {
+                    ip.style.height = `${config.panelsize + 5}px`;
+                    ip.style.width  = `${config.panelsize + 5}px`;
                 }
-            }
+                if (dp) {
+                    dp.style.height = `${config.panelsize + 5}px`;
+                    dp.style.width  = `${config.panelsize + 5}px`;
+                }
+    
+                this.saveConfigToFile();
+    
+                // Toast
+                const toast = document.createElement("div");
+                toast.textContent = "Settings saved!";
+                toast.style.cssText = `
+                    position: absolute;
+                    left: ${event.clientX + 10}px;
+                    top: ${event.clientY - 30}px;
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 8px 12px;
+                    border-radius: 5px;
+                    font-size: 14px;
+                    z-index: 9999;
+                    pointer-events: none;
+                    transition: opacity 0.4s ease-out, transform 0.3s ease-out;
+                `;
+                document.body.appendChild(toast);
+    
+                setTimeout(() => {
+                    toast.style.opacity = "0";
+                    toast.style.transform = "translateY(-8px)";
+                    setTimeout(() => toast.remove(), 300);
+                }, 1300);
+            });
+    
+            if (modalFooter && !modalFooter.contains(saveButton))
+                modalFooter.appendChild(saveButton);
+    
+            observer.disconnect();
         });
-
+    
         observer.observe(document.body, { childList: true, subtree: true });
     }
+    
 
     saveConfigToFile() {
         try {
@@ -297,7 +310,7 @@ module.exports = class {
         // Larger Avatar Popup
         let ipm = document.querySelectorAll("#IPH")
         let ipmc = document.querySelector("img#IPH.IPH")
-        let dpm = document.querySelector(".DPH")
+        let dpm = document.querySelector("img#IPH.DPH")
         let dih = (e.pageY / (container.offsetHeight) * 100);
         let diw = (e.pageX / (container.offsetWidth) * 100);
         
@@ -335,17 +348,32 @@ module.exports = class {
             }
 
             ipm.forEach(panel => {panel.style.display = "block";});
-            ipmc.src = ais;
+            if (ipmc.src != ais) ipmc.src = ais;
             if (config.decoration == 0) {dpm.src = ""}
-            else if (config.decoration == 1 && avatarDecoration) { dpm.src = avatarDecoration.src } 
+            else if (config.decoration == 1 && avatarDecoration) { if (dpm.src !== avatarDecoration.src) dpm.src = avatarDecoration.src } 
             else { dpm.src = "" }
 
-            if (dih >= 75 && dih < 88) { ipm.forEach(panel => {panel.style.top = e.pageY - (config.panelsize / 2) - 10 + 'px'}) }
-            else if (dih >= 88) { ipm.forEach(panel => {panel.style.top = e.pageY - config.panelsize - 10 + 'px'}) }
-            else { ipm.forEach(panel => {panel.style.top = e.pageY - 10 + 'px'}) }
+            if (dih >= 75 && dih < 88) { 
+                ipmc.style.top = e.pageY - (config.panelsize / 2) - 10 + 'px'
+                dpm.style.top = e.pageY - (config.panelsize / 2) - 10 - 30 + 'px'
+            }
+            else if (dih >= 88) { 
+                ipmc.style.top = e.pageY - config.panelsize - 10 + 'px'
+                dpm.style.top = e.pageY - config.panelsize - 10 - 30 + 'px'
+            }
+            else { 
+                ipmc.style.top = e.pageY - 10 + 'px'
+                dpm.style.top = e.pageY - 10 - 30 + 'px'
+            }
 
-            if (diw >= 50) { ipm.forEach(panel => {panel.style.left = e.pageX - config.panelsize - 30 + 'px'}) }
-            else { ipm.forEach(panel => {panel.style.left = e.pageX + 30 + 'px'}) }
+            if (diw >= 50) { 
+                ipmc.style.left = e.pageX - config.panelsize - 30 + 'px'
+                dpm.style.left = e.pageX - config.panelsize - 30 - 15 + 'px'
+            }
+            else { 
+                ipmc.style.left = e.pageX + 30 + 'px'
+                dpm.style.left = e.pageX + 30 - 15 + 'px'
+            }
             if (ccah || dcah) {
 				ipmc.style.background = "transparent";
 				ipm.forEach(panel => {
