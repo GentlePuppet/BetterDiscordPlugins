@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.1.2
+ * @version 5.1.3
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -31,6 +31,32 @@
 
 @else@*/
 
+const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
+const version = "5.1.3"
+const changelog = {
+    "5.1.3": [
+        "Added a changelog! (It's not perfect, but it works.)",
+        "Removed the Save button and made the Done button Save when it closes the settings panel."
+    ],
+    "5.1.2": [
+        "Slightly adjusted the Avatar Decoration display on the popout."
+    ],
+    "5.1.1": [
+        "Added the option to display Nitro avatar decorations on the popup avatars."
+    ],
+    "5.1.0": [
+        "Added support for Avatars in the Chat (Compact and Default)."
+    ],
+    "5.0.5": [
+        "Restylized the Update Notification."
+    ],
+    "5.0.4": [
+        "Moved the plugin source file to https://github.com/GentlePuppet/BetterDiscordPlugins/tree/main/FullResAvatarHover"
+    ],
+    "5.0.2": [
+        "Officially uploaded to github."
+    ]
+};
 
 const fs = require("fs");
 
@@ -45,9 +71,10 @@ const defaultConfig = {
     info: {
         name: "Full Res Avatars On Hover",
         id: "FullSizeAvatars",
-        version: "5.1.2",
+        version: version,
         author: "Gentle Puppet",
-        updateUrl: "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js",
+        updateUrl: source,
+        source: source,
     }
 };
 
@@ -104,6 +131,8 @@ module.exports = class {
         document.addEventListener("mousemove", this.mmhfunc)
 
         this.CheckifUpdate();
+
+        if ((BdApi.Data.load(defaultConfig.info.name, "shownVersion") != defaultConfig.info.version)) this.showChangelog();
     }
 
     getSettingsPanel() {
@@ -117,9 +146,10 @@ module.exports = class {
         this.settingsPanel.id = "settings-panel";
         this.settingsPanel.style.cssText = `
             padding: 20px;
-            display: flex;
             font-size: 14px;
             color: var(--header-primary);
+            width: fit-content;
+            margin: auto auto auto auto;
         `;
     
         // Grid container
@@ -155,6 +185,10 @@ module.exports = class {
             input.type = "checkbox";
             input.checked = checked;
             input.style.cursor = "pointer";
+            input.style.cssText = `
+                width: 24px;
+                height: 24px;
+            `;
             return input;
         };
     
@@ -198,21 +232,30 @@ module.exports = class {
             modalContent.appendChild(this.settingsPanel);
     
             // Footer
-            const modalFooter = document.querySelector('.bd-addon-modal [class*="footer-"]');
-            const saveButton = document.createElement("button");
-    
-            saveButton.textContent = "Save";
-            saveButton.style.cssText = `
-                padding: 6px 16px;
-                background: var(--brand-500);
-                color: white;
-                border: none;
-                cursor: pointer;
-                border-radius: 4px;
-                font-size: 14px;
+            const modalFooter = document.querySelector('.bd-modal-footer');
+
+            const changelogButton = document.createElement("button");
+            changelogButton.textContent = "View Changelog";
+            changelogButton.classList.add("bd-button")
+            changelogButton.classList.add("bd-button-filled")
+            changelogButton.classList.add("bd-button-color-brand")
+            changelogButton.classList.add("bd-button-medium")
+            changelogButton.classList.add("bd-button-grow")
+            changelogButton.style.cssText = `
+                margin-right: 10px;
             `;
+
+            changelogButton.addEventListener("click", () => {
+                this.showChangelog()
+            });
+
+            if (modalFooter && !modalFooter.contains(changelogButton))
+                modalFooter.appendChild(changelogButton);
     
-            saveButton.addEventListener("click", (event) => {
+            observer.disconnect();
+
+            const doneButton = document.querySelector('.bd-button[type="submit"]');
+            doneButton.addEventListener("click", (event) => {
                 // Update config values
                 config.EnableUpdates = enableUpdatesInput.checked ? 1 : 0;
                 config.SilentUpdates = silentUpdatesInput.checked ? 1 : 0;
@@ -240,9 +283,9 @@ module.exports = class {
                 toast.textContent = "Settings saved!";
                 toast.style.cssText = `
                     position: absolute;
-                    left: ${event.clientX + 10}px;
+                    left: ${event.clientX - 10}px;
                     top: ${event.clientY - 30}px;
-                    background: rgba(0, 0, 0, 0.8);
+                    background: rgba(0, 0, 0, 1);
                     color: white;
                     padding: 8px 12px;
                     border-radius: 5px;
@@ -259,11 +302,6 @@ module.exports = class {
                     setTimeout(() => toast.remove(), 300);
                 }, 1300);
             });
-    
-            if (modalFooter && !modalFooter.contains(saveButton))
-                modalFooter.appendChild(saveButton);
-    
-            observer.disconnect();
         });
     
         observer.observe(document.body, { childList: true, subtree: true });
@@ -397,6 +435,43 @@ module.exports = class {
 				})
             }
         }
+    }
+
+    showChangelog() {
+
+        const modalContent = [];
+
+        modalContent.push(`[View Source on GitHub](${defaultConfig.info.source})`);
+        modalContent.push("━━━━━━━━━━━━━━━━━━━━");
+        modalContent.push("");
+
+        const versions = Object.keys(changelog);
+        versions.forEach((version, i) => {
+            if (i !== 0) {
+                modalContent.push("");
+                modalContent.push("━━━━━━━━━━━━━━━━━━━━");
+                modalContent.push("");
+            }
+        
+            const isLatest = version === defaultConfig.info.version
+            const versionLabel = isLatest ? `**Latest Version: ${version}**` : `*${version}*`;
+            modalContent.push(versionLabel);
+            
+            changelog[version].forEach(change => {
+                modalContent.push(isLatest ? `- ${change}` : `*– ${change}*`); // dim each line too
+            });
+        });
+
+        BdApi.UI.showConfirmationModal(
+            `What Changed in ${defaultConfig.info.name} v${defaultConfig.info.version}`,
+            modalContent,
+            {
+                confirmText: "Got it!",
+                cancelText: null
+            }
+        );
+
+        BdApi.Data.save(config.info.name, "shownVersion", config.info.version);
     }
 
     CheckifUpdate() {
