@@ -71,7 +71,7 @@ const defaultConfig = {
     info: {
         name: "Full Res Avatars On Hover",
         id: "FullSizeAvatars",
-        version: version,
+        version: "5.1.3",
         author: "Gentle Puppet",
         updateUrl: source,
         source: source,
