@@ -71,7 +71,7 @@ const defaultConfig = {
     info: {
         name: "Full Res Avatars On Hover",
         id: "FullSizeAvatars",
-        version: "5.1.3",
+        version: version,
         author: "Gentle Puppet",
         updateUrl: source,
         source: source,
@@ -489,7 +489,7 @@ module.exports = class {
             })
             .then(updatedPluginContent => {
                 // Extract the version from the plugin content
-                const match = updatedPluginContent.match(/version:\s*["'](\d+\.\d+\.\d+)["']/);
+                const match = updatedPluginContent.match(/version = \s*["'](\d+\.\d+\.\d+)["']/);
                 const updatedVersion = match ? match[1] : null;
     
                 if (defaultConfig.info.version !== updatedVersion) {
