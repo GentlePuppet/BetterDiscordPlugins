@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.1.4
+ * @version 5.1.5
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,10 +32,13 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.1.4"
+const version = "5.1.5"
 const changelog = {
+    "5.1.5": [
+        "Fixed some avatar's having the offline transparency when online."
+    ],
     "5.1.4": [
-        "Fixed hovering over avatars not working after latest BD update (BD 1.13.4)"
+        "Updated to work with the latest BD update (BD 1.13.4)"
     ],
     "5.1.3": [
         "Added a changelog! (It's not perfect, but it works.)",
@@ -359,7 +362,7 @@ module.exports = class {
         const selectors = [
             "div:hover > div > svg > rect",
             "div:hover > div > svg > svg > rect",
-            "div:hover > div > svg > g > svg > rect"
+            "div:hover > div > svg > g > rect"
         ];
 
         let statusElm = null;
