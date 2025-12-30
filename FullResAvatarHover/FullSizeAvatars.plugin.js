@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.1.3
+ * @version 5.1.4
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,8 +32,11 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.1.3"
+const version = "5.1.4"
 const changelog = {
+    "5.1.4": [
+        "Fixed hovering over avatars not working after latest BD update (BD 1.13.4)"
+    ],
     "5.1.3": [
         "Added a changelog! (It's not perfect, but it works.)",
         "Removed the Save button and made the Done button Save when it closes the settings panel."
@@ -334,13 +337,13 @@ module.exports = class {
     fmm(e) {
         let container = document.querySelector("#app-mount")
         // Server Mmembers List
-        let mah = container.querySelector('[class^="memberInner"] > [class^="avatar"]:hover')
+        let mah = container.querySelector('[class*="memberInner"] > [class*="avatar"]:hover')
         // Avatar decoration overlay
-        let avatarDecoration = container.querySelector('[class^="avatar"]:hover > div > [class^="avatarDecoration"] > foreignObject > div > img')
+        let avatarDecoration = container.querySelector('[class*="avatar"]:hover > div > [class*="avatarDecoration"] > foreignObject > div > img')
         // Friends List
-        let fah = container.querySelector('[class^="link"] > [class^="layout"] > [class^="avatar"]:hover')
+        let fah = container.querySelector('[class*="link"] > [class*="layout"] > [class*="avatar"]:hover')
         // Friends DM List
-        let fadmh = container.querySelector('[class^="listItemContents"] > [class^="userInfo"] > [class*="avatar"]:hover')
+        let fadmh = container.querySelector('[class*="listItemContents"] > [class*="userInfo"] > [class*="avatar"]:hover')
         // Avatar next to Compact Messages
         let ccah = container.querySelector('h3[aria-labelledby*="message-username"] > img[class*="avatar"]:hover')
         // Avatar next to Default Messages
