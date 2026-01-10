@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.1.5
+ * @version 5.1.6
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,8 +32,11 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.1.5"
+const version = "5.1.6"
 const changelog = {
+    "5.1.6": [
+        "Fixed Avatar Decoration not showing on the popout."
+    ],
     "5.1.5": [
         "Fixed some avatar's having the offline transparency when online."
     ],
@@ -342,7 +345,7 @@ module.exports = class {
         // Server Mmembers List
         let mah = container.querySelector('[class*="memberInner"] > [class*="avatar"]:hover')
         // Avatar decoration overlay
-        let avatarDecoration = container.querySelector('[class*="avatar"]:hover > div > [class*="avatarDecoration"] > foreignObject > div > img')
+        let avatarDecoration = container.querySelector('[class*="avatar"]:hover > div > [class*="avatarDecoration"] > foreignObject > img')
         // Friends List
         let fah = container.querySelector('[class*="link"] > [class*="layout"] > [class*="avatar"]:hover')
         // Friends DM List
