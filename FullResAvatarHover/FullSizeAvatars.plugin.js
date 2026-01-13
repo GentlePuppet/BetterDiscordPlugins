@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.1.6
+ * @version 5.1.7
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,8 +32,11 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.1.6"
+const version = "5.1.7"
 const changelog = {
+    "5.1.7": [
+        "Fixed the status of the popout not updating sometimes."
+    ],
     "5.1.6": [
         "Fixed Avatar Decoration not showing on the popout."
     ],
@@ -365,6 +368,7 @@ module.exports = class {
         const selectors = [
             "div:hover > div > svg > rect",
             "div:hover > div > svg > svg > rect",
+            "div:hover > div > svg > g > svg > rect",
             "div:hover > div > svg > g > rect"
         ];
 
