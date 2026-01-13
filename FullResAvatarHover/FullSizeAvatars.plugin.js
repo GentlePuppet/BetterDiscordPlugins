@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.1.8
+ * @version 5.1.9
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,8 +32,11 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.1.8"
+const version = "5.1.9"
 const changelog = {
+    "5.1.9": [
+        `≡ Fixed the changelog always opening on start and ignoring the "Don't show me again!" button. (I fixed it wrong...)`
+    ],
     "5.1.8": [
         "≡ Fixed the status of the popout not updating sometimes.",
         "≡ Fixed the decorations on the popout being the wrong size after changing the settings.",
@@ -86,6 +89,7 @@ const defaultConfig = {
     imagesize: 512,
     panelsize: 256,
     decoration: 1,
+    showchangelog: 0,
     info: {
         name: "Full Res Avatars On Hover",
         id: "FullSizeAvatars",
@@ -150,8 +154,14 @@ module.exports = class {
 
         this.CheckifUpdate();
 
-        if ((BdApi.Data.load(config.info.name)) == null) this.showChangelog();
-        else if ((BdApi.Data.load(defaultConfig.info.name, "shownVersion") != defaultConfig.info.version)) this.showChangelog();
+        console.log("Data " + BdApi.Data.load(config.info.name, "shownVersion"))
+        const shownVersion = BdApi.Data.load(config.info.name, "shownVersion");
+
+        if (!shownVersion)
+            this.showChangelog();
+        else if (shownVersion !== defaultConfig.info.version) 
+            this.showChangelog();
+
     }
 
     getSettingsPanel() {
@@ -582,11 +592,10 @@ module.exports = class {
             content,
             {
                 confirmText: "Don't show me this again until I update!",
-                cancelText: null
+                cancelText: null,
+                onConfirm: () => {BdApi.Data.save(config.info.name, "shownVersion", config.info.version)}
             }
         );
-
-        BdApi.Data.save(config.info.name, "shownVersion", config.info.version);
     }
 
 
