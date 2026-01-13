@@ -31,7 +31,7 @@ A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a h
 | Avatar Resolution     | Resolution size of the expanded avatars, in pixels.                        | 512       |
 | Avatar Panel Size     | The size of the popout avatar box, in pixels.                              | 256       |
 
-<img width="548" height="347" alt="image" src="https://github.com/user-attachments/assets/1a152e2b-5c39-4b36-a683-8bab230d5035" />
+<img width="556" height="374" alt="image" src="https://github.com/user-attachments/assets/9b9e191d-a764-4f32-a213-64117172189d" />
 
 
 Settings are manually saved in a JSON file (`FullResAvatars.Config.json`) inside the plugin folder.
