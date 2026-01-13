@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.1.7
+ * @version 5.1.8
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,41 +32,47 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.1.7"
+const version = "5.1.8"
 const changelog = {
+    "5.1.8": [
+        "≡ Fixed the status of the popout not updating sometimes.",
+        "≡ Fixed the decorations on the popout being the wrong size after changing the settings.",
+        "≡ Fixed the changelog not showing on first time loads.",
+        "≡ Updated and Restyled the changelog to make it less cluttered."
+    ],
     "5.1.7": [
-        "Fixed the status of the popout not updating sometimes."
+        "≡ Fixed the status of the popout not updating sometimes."
     ],
     "5.1.6": [
-        "Fixed Avatar Decoration not showing on the popout."
+        "≡ Fixed Avatar Decoration not showing on the popout."
     ],
     "5.1.5": [
-        "Fixed some avatar's having the offline transparency when online."
+        "≡ Fixed some avatar's having the offline transparency when online."
     ],
     "5.1.4": [
-        "Updated to work with the latest BD update (BD 1.13.4)"
+        "≡ Updated to work with the latest BD update (BD 1.13.4)"
     ],
     "5.1.3": [
-        "Added a changelog! (It's not perfect, but it works.)",
-        "Removed the Save button and made the Done button Save when it closes the settings panel."
+        "≡ Added a changelog! (It's not perfect, but it works.)",
+        "≡ Removed the Save button and made the Done button Save when it closes the settings panel."
     ],
     "5.1.2": [
-        "Slightly adjusted the Avatar Decoration display on the popout."
+        "≡ Slightly adjusted the Avatar Decoration display on the popout."
     ],
     "5.1.1": [
-        "Added the option to display Nitro avatar decorations on the popup avatars."
+        "≡ Added the option to display Nitro avatar decorations on the popup avatars."
     ],
     "5.1.0": [
-        "Added support for Avatars in the Chat (Compact and Default)."
+        "≡ Added support for Avatars in the Chat (Compact and Default)."
     ],
     "5.0.5": [
-        "Restylized the Update Notification."
+        "≡ Restylized the Update Notification."
     ],
     "5.0.4": [
-        "Moved the plugin source file to https://github.com/GentlePuppet/BetterDiscordPlugins/tree/main/FullResAvatarHover"
+        "≡ Moved the plugin source file to https://github.com/GentlePuppet/BetterDiscordPlugins/tree/main/FullResAvatarHover"
     ],
     "5.0.2": [
-        "Officially uploaded to github."
+        "≡ Officially uploaded to github."
     ]
 };
 
@@ -144,7 +150,8 @@ module.exports = class {
 
         this.CheckifUpdate();
 
-        if ((BdApi.Data.load(defaultConfig.info.name, "shownVersion") != defaultConfig.info.version)) this.showChangelog();
+        if ((BdApi.Data.load(config.info.name)) == null) this.showChangelog();
+        else if ((BdApi.Data.load(defaultConfig.info.name, "shownVersion") != defaultConfig.info.version)) this.showChangelog();
     }
 
     getSettingsPanel() {
@@ -284,8 +291,8 @@ module.exports = class {
                     ip.style.width  = `${config.panelsize + 5}px`;
                 }
                 if (dp) {
-                    dp.style.height = `${config.panelsize + 5}px`;
-                    dp.style.width  = `${config.panelsize + 5}px`;
+                    dp.style.height = `${config.panelsize + 65}px`;
+                    dp.style.width  = `${config.panelsize + 65}px`;
                 }
     
                 this.saveConfigToFile();
@@ -451,41 +458,137 @@ module.exports = class {
     }
 
     showChangelog() {
-
-        const modalContent = [];
-
-        modalContent.push(`[View Source on GitHub](${defaultConfig.info.source})`);
-        modalContent.push("━━━━━━━━━━━━━━━━━━━━");
-        modalContent.push("");
+        const React = BdApi.React;
 
         const versions = Object.keys(changelog);
-        versions.forEach((version, i) => {
-            if (i !== 0) {
-                modalContent.push("");
-                modalContent.push("━━━━━━━━━━━━━━━━━━━━");
-                modalContent.push("");
-            }
-        
-            const isLatest = version === defaultConfig.info.version
-            const versionLabel = isLatest ? `**Latest Version: ${version}**` : `*${version}*`;
-            modalContent.push(versionLabel);
-            
-            changelog[version].forEach(change => {
-                modalContent.push(isLatest ? `- ${change}` : `*– ${change}*`); // dim each line too
-            });
-        });
+        const latestVersion = defaultConfig.info.version;
+
+        const latestChanges = changelog[latestVersion] ?? [];
+        const previousVersions = versions.filter(v => v !== latestVersion);
+
+        const changeItemStyle = {
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            overflowWrap: "anywhere",
+            lineHeight: "1.4",
+            marginBottom: "5px",
+            borderBottom: "1px solid var(--border-normal)"
+        };
+
+        const content = React.createElement(
+            "div",
+            { style: { display: "flex", flexDirection: "column", gap: "14px" } },
+
+            React.createElement(
+                "a",
+                {
+                    href: defaultConfig.info.source,
+                    target: "_blank",
+                    rel: "noreferrer",
+                    style: { 
+                        fontWeight: "bold", 
+                        background: "var(--background-secondary)",
+                        border: "1px solid var(--border-normal)", 
+                        padding: "10px", 
+                        borderRadius: "6px"
+                    }
+                },
+                "View Source on GitHub"
+            ),
+
+            // Latest version (always open)
+            React.createElement(
+                "div",
+                {
+                    style: {
+                        background: "var(--background-secondary)",
+                        border: "1px solid var(--border-normal)", 
+                        padding: "12px",
+                        borderRadius: "6px"
+                    }
+                },
+                React.createElement(
+                    "div",
+                    { style: { fontWeight: "bold", marginBottom: "6px", fontSize: "20px" } },
+                    `Latest Version: ${latestVersion}`
+                ),
+                React.createElement(
+                    "ul",
+                    { style: { marginLeft: "18px" } },
+                    latestChanges.map((entry, i) =>
+                        React.createElement("li", { key: i, style: changeItemStyle }, entry)
+                    )
+                )
+            ),
+
+            // Previous versions (collapsed)
+            previousVersions.length > 0 &&
+            React.createElement(
+                "details",
+                {
+                    style: {
+                        background: "var(--background-secondary)",
+                        border: "1px solid var(--border-normal)", 
+                        padding: "12px",
+                        borderRadius: "6px",
+                        marginBottom: "10px"
+                    }
+                },
+                React.createElement(
+                    "summary",
+                    {
+                        style: {
+                            cursor: "pointer",
+                            fontWeight: "bold"
+                        }
+                    },
+                    "Previous Versions"
+                ),
+                previousVersions.map(version =>
+                    React.createElement(
+                        "div",
+                        { key: version, style: { marginTop: "10px" } },
+                        React.createElement(
+                            "div",
+                            {
+                                style: {
+                                    fontStyle: "italic",
+                                    fontSize: "20px",
+                                    marginBottom: "4px"
+                                }
+                            },
+                            version
+                        ),
+                        React.createElement(
+                            "ul",
+                            { style: { marginLeft: "18px" } },
+                            changelog[version].map((entry, i) =>
+                                React.createElement("li", { key: i, style: changeItemStyle }, entry)
+                            )
+                        )
+                    )
+                )
+            )
+        );
 
         BdApi.UI.showConfirmationModal(
-            `What Changed in ${defaultConfig.info.name} v${defaultConfig.info.version}`,
-            modalContent,
+            BdApi.React.createElement(
+                BdApi.React.Fragment,
+                null,
+                `${defaultConfig.info.name} - v${latestVersion}`,
+                BdApi.React.createElement("br"),
+                "What Changed?",
+            ),
+            content,
             {
-                confirmText: "Got it!",
+                confirmText: "Don't show me this again until I update!",
                 cancelText: null
             }
         );
 
         BdApi.Data.save(config.info.name, "shownVersion", config.info.version);
     }
+
 
     CheckifUpdate() {
         if (!config.EnableUpdates) {
