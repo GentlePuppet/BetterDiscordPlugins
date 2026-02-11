@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.1.9
+ * @version 5.3.0
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,50 +32,58 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.1.9"
+const version = "5.3.0"
 const changelog = {
+    "5.3.0": [
+        `- Added an option to only actively display the popout if discord is focused.`,
+        `- Cleaned up the mousemove event to run faster.`
+    ],
+    "5.2.0": [
+        `- Added better version checking for updates.`,
+        `- Added a manual update check to the settings.`
+    ],
     "5.1.9": [
-        `≡ Fixed the changelog always opening on start and ignoring the "Don't show me again!" button. (I fixed it wrong...)`
+        `- Fixed the changelog always opening on start and ignoring the "Don't show me again!" button. (I fixed it wrong...)`
     ],
     "5.1.8": [
-        "≡ Fixed the status of the popout not updating sometimes.",
-        "≡ Fixed the decorations on the popout being the wrong size after changing the settings.",
-        "≡ Fixed the changelog not showing on first time loads.",
-        "≡ Updated and Restyled the changelog to make it less cluttered."
+        "- Fixed the status of the popout not updating sometimes.",
+        "- Fixed the decorations on the popout being the wrong size after changing the settings.",
+        "- Fixed the changelog not showing on first time loads.",
+        "- Updated and Restyled the changelog to make it less cluttered."
     ],
     "5.1.7": [
-        "≡ Fixed the status of the popout not updating sometimes."
+        "- Fixed the status of the popout not updating sometimes."
     ],
     "5.1.6": [
-        "≡ Fixed Avatar Decoration not showing on the popout."
+        "- Fixed Avatar Decoration not showing on the popout."
     ],
     "5.1.5": [
-        "≡ Fixed some avatar's having the offline transparency when online."
+        "- Fixed some avatar's having the offline transparency when online."
     ],
     "5.1.4": [
-        "≡ Updated to work with the latest BD update (BD 1.13.4)"
+        "- Updated to work with the latest BD update (BD 1.13.4)"
     ],
     "5.1.3": [
-        "≡ Added a changelog! (It's not perfect, but it works.)",
-        "≡ Removed the Save button and made the Done button Save when it closes the settings panel."
+        "- Added a changelog! (It's not perfect, but it works.)",
+        "- Removed the Save button and made the Done button Save when it closes the settings panel."
     ],
     "5.1.2": [
-        "≡ Slightly adjusted the Avatar Decoration display on the popout."
+        "- Slightly adjusted the Avatar Decoration display on the popout."
     ],
     "5.1.1": [
-        "≡ Added the option to display Nitro avatar decorations on the popup avatars."
+        "- Added the option to display Nitro avatar decorations on the popup avatars."
     ],
     "5.1.0": [
-        "≡ Added support for Avatars in the Chat (Compact and Default)."
+        "- Added support for Avatars in the Chat (Compact and Default)."
     ],
     "5.0.5": [
-        "≡ Restylized the Update Notification."
+        "- Restylized the Update Notification."
     ],
     "5.0.4": [
-        "≡ Moved the plugin source file to https://github.com/GentlePuppet/BetterDiscordPlugins/tree/main/FullResAvatarHover"
+        "- Moved the plugin source file to https://github.com/GentlePuppet/BetterDiscordPlugins/tree/main/FullResAvatarHover"
     ],
     "5.0.2": [
-        "≡ Officially uploaded to github."
+        "- Officially uploaded to github."
     ]
 };
 
@@ -89,6 +97,7 @@ const defaultConfig = {
     imagesize: 512,
     panelsize: 256,
     decoration: 1,
+    focushover: 1,
     showchangelog: 0,
     info: {
         name: "Full Res Avatars On Hover",
@@ -102,9 +111,27 @@ const defaultConfig = {
 
 let config = {};
 
+let isFocused = true;
+
+function isVersionNewer(current, latest) {
+    if (!current || !latest) return false; // safety
+    const c = current.split('.').map(Number);
+    const l = latest.split('.').map(Number);
+
+    for (let i = 0; i < Math.max(c.length, l.length); i++) {
+        const cur = c[i] || 0; // treat missing parts as 0
+        const lat = l[i] || 0;
+        if (lat > cur) return true;
+        if (lat < cur) return false;
+    }
+    return false; // equal
+}
+
 module.exports = class {
     getName() { return defaultConfig.info.name; }
+    
     constructor() { this.settingsPanel = null; }
+    
     load() {
         if (fs.existsSync(configFile)) {
             try {
@@ -128,8 +155,12 @@ module.exports = class {
         }
 
     }
+
     //---- Start Plugin
     start() {
+        // Cache the main window
+        this.container = document.querySelector("#app-mount");
+
         //---- Create Popout Image Panel
         if (document.querySelector(".IPH")) { document.querySelector(".IPH").remove(); }
         if (document.querySelector(".DPH")) { document.querySelector(".DPH").remove(); }   
@@ -137,26 +168,35 @@ module.exports = class {
         const ip = document.createElement("img");  
         // Decore Panel
         const dp = document.createElement("img");
+        
 
         ip.setAttribute("id", "IPH");
         ip.setAttribute("class", "IPH");
-        ip.setAttribute("style", "display:none;height:" + Number(config.panelsize + 5) + "px;width:" + Number(config.panelsize + 5) + "px;padding:5px;z-index:999999;position:absolute;pointer-events:none;transition: top 0.1s ease;");
+        ip.setAttribute("style", "display:none;height:" + Number(config.panelsize + 5) + "px;width:" + Number(config.panelsize + 5) + "px;padding:5px;z-index:999999;position:absolute;pointer-events:none;transition: top 0.1s ease, left 0.1s ease;");
 
         dp.setAttribute("id", "IPH");
         dp.setAttribute("class", "DPH");
-        dp.setAttribute("style", "display:none;height:" + Number(config.panelsize + 65) + "px;width:" + Number(config.panelsize + 65) + "px;margin: 0px 0px -15px -15px;padding:5px;z-index:9999999;position:absolute;pointer-events:none;transition: top 0.1s ease;");
+        dp.setAttribute("style", "display:none;height:" + Number(config.panelsize + 65) + "px;width:" + Number(config.panelsize + 65) + "px;margin: 0px 0px -15px -15px;padding:5px;z-index:9999999;position:absolute;pointer-events:none;transition: top 0.1s ease, left 0.1s ease;");
 
         document.body.after(dp);
         dp.after(ip);
 
-        //---- Create Track Mouse Event
+        // Cache the popouts
+        this.ip = ip;
+        this.dp = dp;
+
+
+        this.onFocus = () => isFocused = true;
+        this.onBlur = () => isFocused = false;
+
+        window.addEventListener("focus", this.onFocus);
+        window.addEventListener("blur", this.onBlur);
+
         document.addEventListener("mousemove", this.mmhfunc)
 
         this.CheckifUpdate();
 
-        console.log("Data " + BdApi.Data.load(config.info.name, "shownVersion"))
         const shownVersion = BdApi.Data.load(config.info.name, "shownVersion");
-
         if (!shownVersion)
             this.showChangelog();
         else if (shownVersion !== defaultConfig.info.version) 
@@ -241,13 +281,15 @@ module.exports = class {
         const enableUpdatesInput     = makeToggle(config.EnableUpdates === 1);
         const silentUpdatesInput     = makeToggle(config.SilentUpdates === 1);
         const enableDecorationsInput = makeToggle(config.decoration === 1);
+        const focushoverInput        = makeToggle(config.focushover === 1);
     
         const imageSizeInput = makeNumber(config.imagesize);
         const panelSizeInput = makeNumber(config.panelsize);
     
-        addSetting("Enable Updates", enableUpdatesInput);
-        addSetting("Silent Updates", silentUpdatesInput);
+        addSetting("Check For Updates Automatically", enableUpdatesInput);
+        addSetting("Automatically Update Silently", silentUpdatesInput);
         addSetting("Display Avatar Decorations", enableDecorationsInput);
+        addSetting("Require Discord Focus To Display Popout", focushoverInput);
         addSetting("Avatar Resolution", imageSizeInput);
         addSetting("Avatar Panel Size", panelSizeInput);
     
@@ -267,19 +309,62 @@ module.exports = class {
             changelogButton.textContent = "View Changelog";
             changelogButton.classList.add("bd-button")
             changelogButton.classList.add("bd-button-filled")
-            changelogButton.classList.add("bd-button-color-brand")
+            changelogButton.classList.add("bd-button-color-yellow")
             changelogButton.classList.add("bd-button-medium")
             changelogButton.classList.add("bd-button-grow")
             changelogButton.style.cssText = `
                 margin-right: 10px;
             `;
 
+            const manualupdateButton = document.createElement("button");
+            manualupdateButton.textContent = "Check for Updates";
+            manualupdateButton.classList.add("bd-button")
+            manualupdateButton.classList.add("bd-button-filled")
+            manualupdateButton.classList.add("bd-button-color-red")
+            manualupdateButton.classList.add("bd-button-medium")
+            manualupdateButton.classList.add("bd-button-grow")
+            manualupdateButton.style.cssText = `
+                margin-right: 10px;
+            `;
+
             changelogButton.addEventListener("click", () => {
                 this.showChangelog()
             });
+            manualupdateButton.addEventListener("click", (event) => {
+                this.CheckifUpdate(true).then(upToDate => {
+                    if (upToDate) {
+                        // Toast
+                        const toast = document.createElement("div");
+                        toast.textContent = "Plugin is Up-to-date";
+                        toast.style.cssText = `
+                        position: absolute;
+                        left: ${event.clientX - 80}px;
+                        top: ${event.clientY - 40}px;
+                        background: rgba(0, 0, 0, 1);
+                        color: white;
+                        padding: 8px 12px;
+                        border-radius: 5px;
+                        border: 1px solid var(--background-brand);
+                        font-size: 15px;
+                        z-index: 9999;
+                        pointer-events: none;
+                        transition: opacity 0.4s ease-out, transform 0.3s ease-out;
+                    `;
+                        document.body.appendChild(toast);
+
+                        setTimeout(() => {
+                            toast.style.opacity = "0";
+                            toast.style.transform = "translateY(-8px)";
+                            setTimeout(() => toast.remove(), 300);
+                        }, 1300);
+                    }
+                });
+            })
 
             if (modalFooter && !modalFooter.contains(changelogButton))
                 modalFooter.appendChild(changelogButton);
+            if (modalFooter && !modalFooter.contains(manualupdateButton))
+                modalFooter.appendChild(manualupdateButton);
     
             observer.disconnect();
 
@@ -289,6 +374,7 @@ module.exports = class {
                 config.EnableUpdates = enableUpdatesInput.checked ? 1 : 0;
                 config.SilentUpdates = silentUpdatesInput.checked ? 1 : 0;
                 config.decoration   = enableDecorationsInput.checked ? 1 : 0;
+                config.focushover   = focushoverInput.checked ? 1 : 0;
                 config.imagesize    = parseInt(imageSizeInput.value);
                 config.panelsize    = parseInt(panelSizeInput.value);
     
@@ -312,12 +398,13 @@ module.exports = class {
                 toast.textContent = "Settings saved!";
                 toast.style.cssText = `
                     position: absolute;
-                    left: ${event.clientX - 10}px;
-                    top: ${event.clientY - 30}px;
+                    left: ${event.clientX - 60}px;
+                    top: ${event.clientY - 40}px;
                     background: rgba(0, 0, 0, 1);
                     color: white;
                     padding: 8px 12px;
                     border-radius: 5px;
+                    border: 1px solid var(--background-brand);
                     font-size: 14px;
                     z-index: 9999;
                     pointer-events: none;
@@ -336,7 +423,6 @@ module.exports = class {
         observer.observe(document.body, { childList: true, subtree: true });
     }
     
-
     saveConfigToFile() {
         try {
             const configToSave = { ...config };
@@ -350,9 +436,20 @@ module.exports = class {
     }
 
     //---- Track Mouse Event Handler
-    mmhfunc = (e) => this.fmm(e);
+    mmhfunc = (e) => {
+        this.lastMouseEvent = e;
+        if (!this.rafPending) {
+            this.rafPending = true;
+            requestAnimationFrame(() => {
+                this.rafPending = false;
+                this.fmm(this.lastMouseEvent);
+            });
+        }
+    };
 
     stop() {
+        window.removeEventListener("focus", this.onFocus);
+        window.removeEventListener("blur", this.onBlur);
         document.removeEventListener('mousemove', this.mmhfunc);
         if (document.querySelector(".IPH")) { document.querySelector(".IPH").remove(); }
         if (document.querySelector(".DPH")) { document.querySelector(".DPH").remove(); }   
@@ -361,109 +458,146 @@ module.exports = class {
 
     //---- Track Mouse Event and Check If Hovering Over Avatars
     fmm(e) {
-        let container = document.querySelector("#app-mount")
-        // Server Mmembers List
-        let mah = container.querySelector('[class*="memberInner"] > [class*="avatar"]:hover')
-        // Avatar decoration overlay
-        let avatarDecoration = container.querySelector('[class*="avatar"]:hover > div > [class*="avatarDecoration"] > foreignObject > img')
-        // Friends List
-        let fah = container.querySelector('[class*="link"] > [class*="layout"] > [class*="avatar"]:hover')
-        // Friends DM List
-        let fadmh = container.querySelector('[class*="listItemContents"] > [class*="userInfo"] > [class*="avatar"]:hover')
-        // Avatar next to Compact Messages
-        let ccah = container.querySelector('h3[aria-labelledby*="message-username"] > img[class*="avatar"]:hover')
-        // Avatar next to Default Messages
-        let dcah = container.querySelector('[class*="message"] > [class*="contents"] > img[class*="avatar"]:hover')
-        // Larger Avatar Popup
-        let ipm = document.querySelectorAll("#IPH")
-        let ipmc = document.querySelector("img#IPH.IPH")
-        let dpm = document.querySelector("img#IPH.DPH")
-        let dih = (e.pageY / (container.offsetHeight) * 100);
-        let diw = (e.pageX / (container.offsetWidth) * 100);
-        
-        // Try all selectors in priority order and pick the first match
-        const selectors = [
-            "div:hover > div > svg > rect",
-            "div:hover > div > svg > svg > rect",
-            "div:hover > div > svg > g > svg > rect",
-            "div:hover > div > svg > g > rect"
-        ];
+        if (config.focushover === 1)
+            if (!isFocused) 
+                return;
 
-        let statusElm = null;
+        const container = this.container;
+        const ipmc = this.ip;
+        const dpm = this.dp;
 
-        for (const selector of selectors) {
-            const element = container.querySelector(selector);
-            if (element) {
-                statusElm = element;
-                break;
-            }
-        }
-        if (statusElm) {
-            var status = statusElm.getAttribute('fill');
-        } else {
-            statusElm = null
+        const hovered = document.elementFromPoint(e.clientX, e.clientY);
+        if (!hovered) {
+            ipmc.style.display = "none";
+            dpm.style.display = "none";
+            return;
         }
 
-        if (!mah && !fah && !fadmh && !ccah && !dcah) {
-            ipm.forEach(panel => {
-                panel.style.display = "none";
-            });
-        } else {
-            if (ccah || dcah) {
-                var ais = container.querySelector('img[class*="avatar"]:hover').src.replace(/\?size=\d+/g, '?size=' + config.imagesize);
+        const directImg = hovered.closest('img[class*="avatar"]');
+        const avatarContainer = hovered.closest('[class*="avatar"]');
+
+        let avatarImg = null;
+        let isChatAvatar = false;
+
+        if (directImg) {
+            avatarImg = directImg;
+            isChatAvatar = true;
+        } else if (avatarContainer) {
+            avatarImg = avatarContainer.querySelector('img');
+        }
+
+        if (!avatarImg) {
+            ipmc.style.display = "none";
+            dpm.style.display = "none";
+            this.lastAvatar = null;
+            return;
+        }
+
+        if (this.lastAvatar !== avatarContainer) {
+            this.lastAvatar = avatarContainer;
+            const ais = avatarImg.src.replace(/\?size=\d+/g, '?size=' + config.imagesize);
+            if (ipmc.src !== ais) ipmc.src = ais;
+
+            // Decorations
+            if (config.decoration === 1 && isFocused) {
+                const decorationImg =
+                    avatarContainer?.querySelector('[class*="avatarDecoration"] img') ||
+                    avatarContainer?.parentElement?.querySelector('[class*="avatarDecoration"] img');
+
+                dpm.src = decorationImg ? decorationImg.src : "";
             } else {
-                var ais = container.querySelector("div:hover > div > svg > foreignObject > div > img").src.replace(/\?size=\d+/g, '?size=' + config.imagesize);
+                dpm.src = "";
             }
 
-            ipm.forEach(panel => {panel.style.display = "block";});
-            if (ipmc.src != ais) ipmc.src = ais;
-            if (config.decoration == 0) {dpm.src = ""}
-            else if (config.decoration == 1 && avatarDecoration) { if (dpm.src !== avatarDecoration.src) dpm.src = avatarDecoration.src } 
-            else { dpm.src = "" }
+            // Status
+            if (isChatAvatar) {
+                ipmc.style.background = "transparent";
+                ipmc.style.filter = "opacity(1)";
+                dpm.style.filter = "opacity(1)";
+                return;
+            }
+            let status = null;
+            if (!isChatAvatar && avatarContainer) {
+                const prioritySelectors = [
+                    ":scope > div > svg > rect",
+                    ":scope > div > svg > svg > rect",
+                    ":scope > div > svg > g > svg > rect",
+                    ":scope > div > svg > g > rect"
+                ];
+                for (const selector of prioritySelectors) {
+                    const rect = avatarContainer.querySelector(selector);
+                    if (!rect) continue;
 
-            if (dih >= 75 && dih < 88) { 
-                ipmc.style.top = e.pageY - (config.panelsize / 2) - 10 + 'px'
-                dpm.style.top = e.pageY - (config.panelsize / 2) - 10 - 30 + 'px'
-            }
-            else if (dih >= 88) { 
-                ipmc.style.top = e.pageY - config.panelsize - 10 + 'px'
-                dpm.style.top = e.pageY - config.panelsize - 10 - 30 + 'px'
-            }
-            else { 
-                ipmc.style.top = e.pageY - 10 + 'px'
-                dpm.style.top = e.pageY - 10 - 30 + 'px'
+                    const fill = rect.getAttribute("fill");
+                    if (!fill) continue;
+
+                    status = fill;
+                    break;
+                }
             }
 
-            if (diw >= 50) { 
-                ipmc.style.left = e.pageX - config.panelsize - 30 + 'px'
-                dpm.style.left = e.pageX - config.panelsize - 30 - 15 + 'px'
+            if (!status || status === "#84858d") {
+                ipmc.style.background = "transparent";
+                ipmc.style.filter = "opacity(0.6)";
+                dpm.style.filter = "opacity(0.6)";
             }
-            else { 
-                ipmc.style.left = e.pageX + 30 + 'px'
-                dpm.style.left = e.pageX + 30 - 15 + 'px'
+            else if (status === "transparent") {
+                ipmc.style.background = "transparent";
+                ipmc.style.filter = "opacity(1)";
+                dpm.style.filter = "opacity(1)";
             }
-            if (ccah || dcah) {
-				ipmc.style.background = "transparent";
-				ipm.forEach(panel => {
-					panel.style.filter = "opacity(1)";
-				})
-            } else if (!statusElm) {
-				ipmc.style.background = "transparent";
-				ipm.forEach(panel => {
-					panel.style.filter = "opacity(0.4)";
-				})
-            } else if (status == "transparent") {
-                var statusfix = container.querySelector("div:hover > div > svg > svg > rect").getAttribute('fill');
-				ipmc.style.background = statusfix;
-				ipm.forEach(panel => {
-					panel.style.filter = "opacity(1)";
-				})
-            } else {
-				ipmc.style.background = status;
-				ipm.forEach(panel => {
-					panel.style.filter = "opacity(1)";
-				})
+            else {
+                ipmc.style.background = status;
+                ipmc.style.filter = "opacity(1)";
+                dpm.style.filter = "opacity(1)";
             }
+        }
+
+        const wasHidden = ipmc.style.display === "none";
+
+        if (wasHidden) {
+            ipmc.style.transition = "none";
+            dpm.style.transition = "none";
+        }
+
+        ipmc.style.display = "block";
+        dpm.style.display = "block";
+
+        // Positioning
+        const dih = (e.pageY / container.offsetHeight) * 100;
+        const diw = (e.pageX / container.offsetWidth) * 100;
+
+        let top, left;
+
+        if (dih >= 75 && dih < 88) {
+            top = e.pageY - (config.panelsize / 2) - 10;
+        }
+        else if (dih >= 88) {
+            top = e.pageY - config.panelsize - 10;
+        }
+        else {
+            top = e.pageY - 10;
+        }
+
+        if (diw >= 50) {
+            left = e.pageX - config.panelsize - 30;
+        }
+        else {
+            left = e.pageX + 30;
+        }
+
+        ipmc.style.top = top + 'px';
+        ipmc.style.left = left + 'px';
+
+        dpm.style.top = (top - 30) + 'px';
+        dpm.style.left = (left - 15) + 'px';
+
+        if (wasHidden) {
+            // Force layout so position applies instantly
+            void ipmc.offsetHeight;
+
+            ipmc.style.transition = "top 0.1s ease, left 0.1s ease";
+            dpm.style.transition = "top 0.1s ease, left 0.1s ease";
         }
     }
 
@@ -597,17 +731,16 @@ module.exports = class {
             }
         );
     }
-
-
-    CheckifUpdate() {
-        if (!config.EnableUpdates) {
-            console.log('FullSizeAvatars: Updates are disabled.');
-            return;
-        }
+    
+    CheckifUpdate(manualCheck = false) {
+        if (!manualCheck && !config.EnableUpdates) {
+                console.log('FullSizeAvatars: Updates are disabled.');
+                return;
+            }
     
         console.log('FullSizeAvatars: Updates are Enabled');
     
-        BdApi.Net.fetch(defaultConfig.info.updateUrl)
+        return BdApi.Net.fetch(defaultConfig.info.updateUrl)
             .then(response => {
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 return response.text();
@@ -617,7 +750,7 @@ module.exports = class {
                 const match = updatedPluginContent.match(/version = \s*["'](\d+\.\d+\.\d+)["']/);
                 const updatedVersion = match ? match[1] : null;
     
-                if (defaultConfig.info.version !== updatedVersion) {
+                if (updatedVersion && isVersionNewer(defaultConfig.info.version, updatedVersion)) {
                     if (config.SilentUpdates) {
                         console.log('FullSizeAvatars: Silent Updates are enabled.');
                         require('fs').writeFile(require('path').join(BdApi.Plugins.folder, "FullSizeAvatars.plugin.js"), updatedPluginContent, (err) => {
@@ -688,12 +821,15 @@ module.exports = class {
     
                         return;
                     }
+                    return false;
                 } else {
                     console.log("FullSizeAvatars: Plugin is Up-to-date");
+                    return true
                 }
             })
             .catch(error => {
                 console.error('FullSizeAvatars: Error downloading update:', error);
+                return false;
             });
     }
 }
