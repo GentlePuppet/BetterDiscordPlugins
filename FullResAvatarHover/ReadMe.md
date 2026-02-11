@@ -27,11 +27,13 @@ A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a h
 |-----------------------|----------------------------------------------------------------------------|-----------|
 | Enable Update Check   | Check for updates when plugin starts.                                      | Enabled   |
 | Enable Silent Updates | Allow the plugin to update itself automatically without prompts.           | Disabled  |
-| Avatar Decorations    | Display nitro decorations on the popup avatar                              | Enabled   |
+| Avatar Decorations    | Display nitro decorations on the popup avatar.                             | Enabled   |
+| Require Focus         | Require Discord Focus To Display Popout.                                   | Enabled   |
 | Avatar Resolution     | Resolution size of the expanded avatars, in pixels.                        | 512       |
 | Avatar Panel Size     | The size of the popout avatar box, in pixels.                              | 256       |
 
-<img width="556" height="374" alt="image" src="https://github.com/user-attachments/assets/9b9e191d-a764-4f32-a213-64117172189d" />
+<img width="537" height="392" alt="image" src="https://github.com/user-attachments/assets/0325f77d-476a-407a-8f93-4b396c13d7bd" />
+
 
 
 Settings are manually saved in a JSON file (`FullResAvatars.Config.json`) inside the plugin folder.
