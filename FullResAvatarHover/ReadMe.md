@@ -4,11 +4,8 @@ A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a h
 <br>Perfect for getting a clearer look at profile pictures without needing to open the profile popup.\
 <br>Includes an option to display Avatar Decorations →
 
-<br><br><br>
-<br><br>
 
 ## Preview
-
 <img src="https://user-images.githubusercontent.com/43224790/193963127-166ce3ca-d411-4cea-aeb6-208affc993e4.gif">
 
 <br>
@@ -23,6 +20,7 @@ A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a h
 
 ## Settings
 
+
 | Setting               | Description                                                                | Default   |
 |-----------------------|----------------------------------------------------------------------------|-----------|
 | Enable Update Check   | Check for updates when plugin starts.                                      | Enabled   |
@@ -31,10 +29,9 @@ A simple BetterDiscord plugin that lets you <b>hover over avatars</b> to see a h
 | Require Focus         | Require Discord Focus To Display Popout.                                   | Enabled   |
 | Avatar Resolution     | Resolution size of the expanded avatars, in pixels.                        | 512       |
 | Avatar Panel Size     | The size of the popout avatar box, in pixels.                              | 256       |
+<img align="middle" width="500" height="auto" alt="image" src="https://github.com/user-attachments/assets/bffd2431-c460-4fc4-bd20-a9e902192a10" />
 
-<img width="537" height="392" alt="image" src="https://github.com/user-attachments/assets/0325f77d-476a-407a-8f93-4b396c13d7bd" />
-
-
+<br><br>
 
 Settings are manually saved in a JSON file (`FullResAvatars.Config.json`) inside the plugin folder.
 > When I first made this plugin I didn't know how to use the BD settings panel,\
