@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.3.0
+ * @version 5.3.1
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,8 +32,11 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.3.0"
+const version = "5.3.1"
 const changelog = {
+    "5.3.1": [
+        `- Fixed decorations on the popout sometimes not loading correctly.`
+    ],
     "5.3.0": [
         `- Added an option to only actively display the popout if discord is focused.`,
         `- Cleaned up the mousemove event to run faster.`
@@ -475,6 +478,9 @@ module.exports = class {
 
         const directImg = hovered.closest('img[class*="avatar"]');
         const avatarContainer = hovered.closest('[class*="avatar"]');
+        const decorationImg =
+            avatarContainer?.querySelector('[class*="avatarDecoration"] img') ||
+            avatarContainer?.parentElement?.querySelector('[class*="avatarDecoration"] img');
 
         let avatarImg = null;
         let isChatAvatar = false;
@@ -490,52 +496,57 @@ module.exports = class {
             ipmc.style.display = "none";
             dpm.style.display = "none";
             this.lastAvatar = null;
+            this.lastdeco = null;
             return;
         }
 
+        // Avatars
         if (this.lastAvatar !== avatarContainer) {
             this.lastAvatar = avatarContainer;
             const ais = avatarImg.src.replace(/\?size=\d+/g, '?size=' + config.imagesize);
             if (ipmc.src !== ais) ipmc.src = ais;
+        }
 
-            // Decorations
-            if (config.decoration === 1 && isFocused) {
-                const decorationImg =
-                    avatarContainer?.querySelector('[class*="avatarDecoration"] img') ||
-                    avatarContainer?.parentElement?.querySelector('[class*="avatarDecoration"] img');
-
-                dpm.src = decorationImg ? decorationImg.src : "";
-            } else {
-                dpm.src = "";
+        // Decorations
+        if (decorationImg && config.decoration === 1 && isFocused) {
+            if (this.lastdeco !== decorationImg.src) {
+                this.lastdeco = decorationImg.src;
+                dpm.src = decorationImg.src;
             }
+        } else {
+            this.lastdeco = null;
+            dpm.src = "";
+        }
 
-            // Status
-            if (isChatAvatar) {
-                ipmc.style.background = "transparent";
-                ipmc.style.filter = "opacity(1)";
-                dpm.style.filter = "opacity(1)";
-                return;
+        // Status
+        if (isChatAvatar) {
+            ipmc.style.background = "transparent";
+            ipmc.style.filter = "opacity(1)";
+            dpm.style.filter = "opacity(1)";
+            this.lastStatus = "chat";
+            return;
+        }
+        let status = null;
+        if (!isChatAvatar && avatarContainer) {
+            const prioritySelectors = [
+                ":scope > div > svg > rect",
+                ":scope > div > svg > svg > rect",
+                ":scope > div > svg > g > svg > rect",
+                ":scope > div > svg > g > rect"
+            ];
+            for (const selector of prioritySelectors) {
+                const rect = avatarContainer.querySelector(selector);
+                if (!rect) continue;
+
+                const fill = rect.getAttribute("fill");
+                if (!fill) continue;
+
+                status = fill;
+                break;
             }
-            let status = null;
-            if (!isChatAvatar && avatarContainer) {
-                const prioritySelectors = [
-                    ":scope > div > svg > rect",
-                    ":scope > div > svg > svg > rect",
-                    ":scope > div > svg > g > svg > rect",
-                    ":scope > div > svg > g > rect"
-                ];
-                for (const selector of prioritySelectors) {
-                    const rect = avatarContainer.querySelector(selector);
-                    if (!rect) continue;
-
-                    const fill = rect.getAttribute("fill");
-                    if (!fill) continue;
-
-                    status = fill;
-                    break;
-                }
-            }
-
+        }
+        if (this.lastStatus !== status) {
+            this.lastStatus = status;
             if (!status || status === "#84858d") {
                 ipmc.style.background = "transparent";
                 ipmc.style.filter = "opacity(0.6)";
