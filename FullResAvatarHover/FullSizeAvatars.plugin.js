@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.3.1
+ * @version 5.3.2
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,8 +32,12 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.3.1"
+const version = "5.3.2"
 const changelog = {
+    "5.3.2": [
+        `- Fixed chat avatars not popping out.`,
+        `- Tiny optimization to the hover tracking.`
+    ],
     "5.3.1": [
         `- Fixed decorations on the popout sometimes not loading correctly.`
     ],
@@ -165,20 +169,18 @@ module.exports = class {
         this.container = document.querySelector("#app-mount");
 
         //---- Create Popout Image Panel
-        if (document.querySelector(".IPH")) { document.querySelector(".IPH").remove(); }
-        if (document.querySelector(".DPH")) { document.querySelector(".DPH").remove(); }   
+        const PanelElements = document.querySelectorAll(".FullSizeAvatarHover")
+        if (PanelElements) { PanelElements.forEach(element => {element.remove()})}
         // Image Panel
         const ip = document.createElement("img");  
         // Decore Panel
         const dp = document.createElement("img");
         
 
-        ip.setAttribute("id", "IPH");
-        ip.setAttribute("class", "IPH");
+        ip.setAttribute("class", "IPH FullSizeAvatarHover");
         ip.setAttribute("style", "display:none;height:" + Number(config.panelsize + 5) + "px;width:" + Number(config.panelsize + 5) + "px;padding:5px;z-index:999999;position:absolute;pointer-events:none;transition: top 0.1s ease, left 0.1s ease;");
 
-        dp.setAttribute("id", "IPH");
-        dp.setAttribute("class", "DPH");
+        dp.setAttribute("class", "DPH FullSizeAvatarHover");
         dp.setAttribute("style", "display:none;height:" + Number(config.panelsize + 65) + "px;width:" + Number(config.panelsize + 65) + "px;margin: 0px 0px -15px -15px;padding:5px;z-index:9999999;position:absolute;pointer-events:none;transition: top 0.1s ease, left 0.1s ease;");
 
         document.body.after(dp);
@@ -188,6 +190,8 @@ module.exports = class {
         this.ip = ip;
         this.dp = dp;
 
+        // Cache the regex for changing avatar resolution
+        this.sizeRegex ??= /\?size=\d+/g;
 
         this.onFocus = () => isFocused = true;
         this.onBlur = () => isFocused = false;
@@ -195,7 +199,7 @@ module.exports = class {
         window.addEventListener("focus", this.onFocus);
         window.addEventListener("blur", this.onBlur);
 
-        document.addEventListener("mousemove", this.mmhfunc)
+        document.addEventListener("mousemove", this.mouseMoveEvent)
 
         this.CheckifUpdate();
 
@@ -204,7 +208,6 @@ module.exports = class {
             this.showChangelog();
         else if (shownVersion !== defaultConfig.info.version) 
             this.showChangelog();
-
     }
 
     getSettingsPanel() {
@@ -439,13 +442,13 @@ module.exports = class {
     }
 
     //---- Track Mouse Event Handler
-    mmhfunc = (e) => {
-        this.lastMouseEvent = e;
-        if (!this.rafPending) {
-            this.rafPending = true;
+    mouseMoveEvent = (mousemovedata) => {
+        this.lastMouse = {clientX: mousemovedata.clientX, clientY: mousemovedata.clientY, pageX: mousemovedata.pageX, pageY: mousemovedata.pageY};
+        if (!this.frameUpdatePending) {
+            this.frameUpdatePending = true;
             requestAnimationFrame(() => {
-                this.rafPending = false;
-                this.fmm(this.lastMouseEvent);
+                this.frameUpdatePending = false;
+                this.mouseMoveFunction(this.lastMouse);
             });
         }
     };
@@ -453,14 +456,13 @@ module.exports = class {
     stop() {
         window.removeEventListener("focus", this.onFocus);
         window.removeEventListener("blur", this.onBlur);
-        document.removeEventListener('mousemove', this.mmhfunc);
-        if (document.querySelector(".IPH")) { document.querySelector(".IPH").remove(); }
-        if (document.querySelector(".DPH")) { document.querySelector(".DPH").remove(); }   
-        if (document.getElementById("FSAUpdateNotif")) { document.getElementById("FSAUpdateNotif").remove(); }
+        document.removeEventListener('mousemove', this.mouseMoveEvent);
+        const PanelElements = document.querySelectorAll(".FullSizeAvatarHover")
+        if (PanelElements) { PanelElements.forEach(element => {element.remove()})}
     }
 
     //---- Track Mouse Event and Check If Hovering Over Avatars
-    fmm(e) {
+    mouseMoveFunction(cursorPos) {
         if (config.focushover === 1)
             if (!isFocused) 
                 return;
@@ -469,15 +471,16 @@ module.exports = class {
         const ipmc = this.ip;
         const dpm = this.dp;
 
-        const hovered = document.elementFromPoint(e.clientX, e.clientY);
+        const hovered = document.elementFromPoint(cursorPos.clientX, cursorPos.clientY);
         if (!hovered) {
             ipmc.style.display = "none";
             dpm.style.display = "none";
             return;
         }
 
+        //const directImg = hovered.closest('img[class*="avatar"]');
         const directImg = hovered.closest('img[class*="avatar"]');
-        const avatarContainer = hovered.closest('[class*="avatar"]');
+        const avatarContainer = hovered.closest('div[class*="avatar"]');
         const decorationImg =
             avatarContainer?.querySelector('[class*="avatarDecoration"] img') ||
             avatarContainer?.parentElement?.querySelector('[class*="avatarDecoration"] img');
@@ -491,20 +494,26 @@ module.exports = class {
         } else if (avatarContainer) {
             avatarImg = avatarContainer.querySelector('img');
         }
-
+        
         if (!avatarImg) {
             ipmc.style.display = "none";
             dpm.style.display = "none";
+            ipmc.src = "";
             this.lastAvatar = null;
             this.lastdeco = null;
             return;
         }
 
+        const avatarImageOldSource = avatarImg.src
+        
+        const avatarImageSource = avatarImg.src.replace(this.sizeRegex, '?size=' + config.imagesize);
+
         // Avatars
-        if (this.lastAvatar !== avatarContainer) {
-            this.lastAvatar = avatarContainer;
-            const ais = avatarImg.src.replace(/\?size=\d+/g, '?size=' + config.imagesize);
-            if (ipmc.src !== ais) ipmc.src = ais;
+        if (this.lastAvatar !== avatarImageSource) {
+            this.lastAvatar = avatarImageSource;
+            if (avatarImageOldSource !== avatarImageSource)
+                ipmc.src = avatarImageOldSource;
+            ipmc.src = avatarImageSource;
         }
 
         // Decorations
@@ -524,7 +533,6 @@ module.exports = class {
             ipmc.style.filter = "opacity(1)";
             dpm.style.filter = "opacity(1)";
             this.lastStatus = "chat";
-            return;
         }
         let status = null;
         if (!isChatAvatar && avatarContainer) {
@@ -545,7 +553,7 @@ module.exports = class {
                 break;
             }
         }
-        if (this.lastStatus !== status) {
+        if (!isChatAvatar && this.lastStatus !== status) {
             this.lastStatus = status;
             if (!status || status === "#84858d") {
                 ipmc.style.background = "transparent";
@@ -564,6 +572,7 @@ module.exports = class {
             }
         }
 
+        // Visibility
         const wasHidden = ipmc.style.display === "none";
 
         if (wasHidden) {
@@ -575,26 +584,26 @@ module.exports = class {
         dpm.style.display = "block";
 
         // Positioning
-        const dih = (e.pageY / container.offsetHeight) * 100;
-        const diw = (e.pageX / container.offsetWidth) * 100;
+        const dih = (cursorPos.pageY / container.offsetHeight) * 100;
+        const diw = (cursorPos.pageX / container.offsetWidth) * 100;
 
         let top, left;
 
         if (dih >= 75 && dih < 88) {
-            top = e.pageY - (config.panelsize / 2) - 10;
+            top = cursorPos.pageY - (config.panelsize / 2) - 10;
         }
         else if (dih >= 88) {
-            top = e.pageY - config.panelsize - 10;
+            top = cursorPos.pageY - config.panelsize - 10;
         }
         else {
-            top = e.pageY - 10;
+            top = cursorPos.pageY - 10;
         }
 
         if (diw >= 50) {
-            left = e.pageX - config.panelsize - 30;
+            left = cursorPos.pageX - config.panelsize - 30;
         }
         else {
-            left = e.pageX + 30;
+            left = cursorPos.pageX + 30;
         }
 
         ipmc.style.top = top + 'px';
@@ -773,8 +782,8 @@ module.exports = class {
                         });
                     } else {
                         console.log('FullSizeAvatars: Silent Updates are disabled.');
-                        if (document.getElementById("FSAUpdateNotif")) {
-                            document.getElementById("FSAUpdateNotif").remove();
+                        if (document.querySelector(".FSAUpdateNotif")) {
+                            document.querySelector(".FSAUpdateNotif").remove();
                         }
                         const UpdateNotif = document.createElement("div");
                         const UpdateText = document.createElement("a");
@@ -787,7 +796,7 @@ module.exports = class {
                         UpdateNotif.append(SeperatorText);
                         UpdateNotif.append(CloseUpdate);
     
-                        UpdateNotif.setAttribute("id", "FSAUpdateNotif");
+                        UpdateNotif.setAttribute("class", "FSAUpdateNotif FullSizeAvatarHover")
                         
                         UpdateNotif.setAttribute("style", `position: fixed; top: 20px; left: 50%;
                                                            transform: translateX(-50%); background: var(--brand-500);
