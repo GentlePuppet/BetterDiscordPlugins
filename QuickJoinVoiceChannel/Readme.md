@@ -11,6 +11,9 @@ Left-Click to Join the Defined Channel<br>
 Right-Click to Change the Defined Channel<br>
 Hold to drag the button around<br><br>
 
+<img width="352" height="207" alt="image" src="https://github.com/user-attachments/assets/5e8ef28f-2945-4faa-addf-6843691bc86c" />
+
+
 
 
 ## 📁 Installation
