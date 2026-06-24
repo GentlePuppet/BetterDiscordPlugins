@@ -1,8 +1,10 @@
 /**
  * @name Capitalize Channel Names
  * @author GentlePuppet
- * @version 1.0.0
+ * @version 1.0.1
  * @description Replaces underscores and dashes with spaces and capitalizes channel names.
+ * @website https://github.com/GentlePuppet/BetterDiscordPlugins
+ * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js
  */
 
 module.exports = class {
@@ -13,6 +15,12 @@ module.exports = class {
 
         this.observer = new MutationObserver(mutations => {
             for (const m of mutations) {
+                if (m.type === "characterData") {
+                    const parent = m.target.parentElement;
+                    if (parent) this.queue.add(parent);
+                    continue;
+                }
+
                 for (const node of m.addedNodes) {
                     if (node.nodeType !== 1) continue;
 
@@ -39,7 +47,7 @@ module.exports = class {
 
             this.pending = true;
 
-            requestAnimationFrame(() => {
+            this.frame = requestAnimationFrame(() => {
                 for (const node of this.queue) {
                     this.processNode(node);
                 }
@@ -58,9 +66,16 @@ module.exports = class {
             characterData: true
         });
 
+        document.querySelectorAll('a[href^="/channels/"]').forEach(node => this.processNode(node));
+        document.querySelectorAll('[class*="overflow"]').forEach(node => this.processNode(node));
     }
 
     stop() {
+        if (this.frame) {
+            cancelAnimationFrame(this.frame);
+            this.frame = null;
+        }
+
         if (this.observer) {
             this.observer.disconnect();
             this.observer = null;
@@ -71,6 +86,8 @@ module.exports = class {
     }
 
     processNode(node) {
+        if (!this.processedChannels) return;
+
         let nameNode = null;
 
         if (node.matches?.('a[href^="/channels/"]')) {
@@ -88,7 +105,7 @@ module.exports = class {
         const current = nameNode.textContent?.trim();
         if (!current) return;
 
-        const last = this.processedChannels.get(nameNode);
+        const last = this.processedChannels?.get(nameNode);
         if (last === current) return;
 
         const formatted = this.formatChannelName(current);
