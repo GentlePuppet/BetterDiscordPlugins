@@ -4,7 +4,7 @@
  * @version 1.0.1
  * @description Replaces underscores and dashes with spaces and capitalizes channel names.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins
- * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/AutoIdle/AutoIdle.plugin.js
+ * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/CapitalizeChannels/CapitalizeChannels.plugin.js
  */
 
 module.exports = class {
