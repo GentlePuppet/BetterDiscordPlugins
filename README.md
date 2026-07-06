@@ -6,6 +6,9 @@ I mainly make these for my own use, but you are welcome to use them too.\
 # [Capitalize Channels](https://github.com/GentlePuppet/BetterDiscordPlugins/blob/main/CapitalizeChannels)
 > A BetterDiscord plugin that formats channel names by replacing underscores and dashes with spaces and capitalizes.
 
+# [Hide Channels](https://github.com/GentlePuppet/BetterDiscordPlugins/tree/main/HideChannels)
+> A BetterDiscord plugin that lets you hide/show channels.
+
 # [Auto Idle](https://github.com/GentlePuppet/BetterDiscordPlugins/blob/main/AutoIdle)
 > A BetterDiscord plugin that automatically changes your status based on your Discord activity.
 
