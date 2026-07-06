@@ -1,7 +1,7 @@
 /**
  * @name Capitalize Channel Names
  * @author GentlePuppet
- * @version 1.0.1
+ * @version 1.0.2
  * @description Replaces underscores and dashes with spaces and capitalizes channel names.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/CapitalizeChannels/CapitalizeChannels.plugin.js
@@ -56,11 +56,7 @@ module.exports = class {
             });
         });
 
-        const channelContainer =
-            document.querySelector('[class*="sidebarList"]') ||
-            document.body;
-
-        this.observer.observe(channelContainer, {
+        this.observer.observe(document.body, {
             childList: true,
             subtree: true,
             characterData: true
