@@ -2,7 +2,7 @@
 * @name Hide Channels 
 * @author GentlePuppet 
 * @authorId 199263542833053696 
-* @version 1.0.3
+* @version 1.0.4
 * @description A plugin that lets you hide channels. 
 */
 
@@ -30,7 +30,10 @@ module.exports = class {
 
         this.observer = new MutationObserver(() => {
             clearTimeout(timeout);
-            timeout = setTimeout(() => { this.injectButtons(); this.refresh() }, 50);
+            timeout = setTimeout(() => {
+                this.injectButtons();
+                this.refresh()
+            }, 50);
         });
 
         this.observer.observe(document.body, {
@@ -49,6 +52,7 @@ module.exports = class {
         document.querySelector("#hc-toggle")?.remove();
         document.querySelector("#hc-config")?.remove();
         document.querySelector("#hc-editor")?.remove();
+        document.querySelector("#hc-root")?.remove();
         document.querySelector(".hc-style")?.remove();
 
         this.observer?.disconnect();
@@ -103,6 +107,18 @@ module.exports = class {
         const header = document.querySelector('[aria-label="Channels"]');
         if (!header) return;
 
+        const root = document.createElement("div");
+        root.id = "hc-root";
+        Object.assign(root.style, {
+            position: "fixed",
+            zIndex: 1000
+        });
+        const rect = header.getBoundingClientRect();
+        root.style.left = `${rect.left}px`;
+        root.style.top = `${rect.top}px`;
+        root.style.width = `${rect.width}px`;
+        document.body.after(root);
+
         const toggle = document.createElement("button");
         toggle.id = "hc-toggle";
         toggle.textContent = "Show";
@@ -110,10 +126,7 @@ module.exports = class {
             width: "50%",
             background: "#016337",
             color: "#ffffff",
-            textShadow: "0px 0px 4px black",
-            position: "fixed",
-            left: "0",
-            zIndex: "100"
+            textShadow: "0px 0px 4px black"
         })
         toggle.onclick = () => {
             this.hidden = !this.hidden;
@@ -121,7 +134,7 @@ module.exports = class {
             toggle.style.background = this.hidden ? "#016337" : "#630101";
             this.refresh();
         };
-        header.before(toggle);
+        root.append(toggle);
 
         const config = document.createElement("button");
         config.id = "hc-config";
@@ -130,13 +143,10 @@ module.exports = class {
             width: "50%",
             background: "#00496b",
             color: "#ffffff",
-            textShadow: "0px 0px 4px black",
-            position: "fixed",
-            zIndex: "100",
-            left: "50%"
+            textShadow: "0px 0px 4px black"
         })
         config.onclick = () => this.openEditor();
-        header.before(config);
+        root.append(config);
     }
 
     parseLinks(text) {
@@ -274,7 +284,7 @@ module.exports = class {
         let dragging = false;
         let offsetX = 0;
         let offsetY = 0;
-        titleBar.addEventListener("pointerdown", e => {            
+        titleBar.addEventListener("pointerdown", e => {
             dragging = true;
 
             offsetX = e.clientX - pop.offsetLeft;
