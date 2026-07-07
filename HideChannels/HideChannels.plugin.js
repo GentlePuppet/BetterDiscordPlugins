@@ -2,7 +2,7 @@
 * @name Hide Channels 
 * @author GentlePuppet 
 * @authorId 199263542833053696 
-* @version 1.0.1 
+* @version 1.0.2
 * @description A plugin that lets you hide channels. 
 */
 
@@ -172,7 +172,6 @@ module.exports = class {
 
         const pop = document.createElement("div");
         pop.id = "hc-editor";
-
         Object.assign(pop.style, {
             position: "fixed",
             top: "80px",
@@ -180,30 +179,67 @@ module.exports = class {
             width: "500px",
             background: "#2b2d31",
             border: "1px solid #555",
-            padding: "10px 15px 10px 10px",
+            borderRadius: "6px",
+            overflow: "hidden",
+            boxShadow: "0 8px 24px rgba(0,0,0,.45)",
             zIndex: 999999
         });
 
+        const titleBar = document.createElement("div");
+        titleBar.textContent = "Hide Channels Settings";
+        Object.assign(titleBar.style, {
+            height: "32px",
+            background: "#1e1f22",
+            color: "#ffffff",
+            borderBottom: "1px solid #555",
+            display: "flex",
+            alignItems: "center",
+            padding: "0 10px",
+            cursor: "move",
+            userSelect: "none",
+            fontWeight: "600"
+        });
+        pop.append(titleBar);
+
+        const content = document.createElement("div");
+        Object.assign(content.style, {
+            padding: "10px 15px 10px 10px",
+            display: "grid",
+        });
+        pop.append(content);
+
         const box = document.createElement("textarea");
-
-        box.style.width = "100%";
-        box.style.height = "150px";
-
+        Object.assign(box.style, {
+            width: "100%",
+            height: "200px",
+            background: "#0e0e0e",
+            color: "#ffffff"
+        });
         const currentGuild = this.getCurrentGuildID();
-
         const channels = currentGuild
             ? (this.settings.channelsByGuild[currentGuild] ?? [])
             : Object.values(this.settings.channelsByGuild).flat();
-
         box.value = channels
             .map(id => `https://discord.com/channels/${currentGuild}/${id}`)
             .join("\n");
-
-        pop.append(box);
+        content.append(box);
 
         const save = document.createElement("button");
-        save.textContent = "Save";
+        save.textContent = "Save & Close";
+        Object.assign(save.style, {
+            height: "30px",
+            borderRadius: "2px",
+            background: "#1d9519",
+            color: "#ffffff",
+            borderBottom: "1px solid #555",
+            textShadow: "0px 0px 4px black",
+            alignItems: "center",
+            marginLeft: "auto",
+            marginTop: "10px",
+            marginRight: "-6px",
+            padding: "0px 10px",
 
+        });
         save.onclick = () => {
             const currentGuild = this.getCurrentGuildID();
             if (!currentGuild) return;
@@ -218,8 +254,29 @@ module.exports = class {
             this.refresh();
             pop.remove();
         };
+        content.append(save);
 
-        pop.append(save);
+        let dragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+        titleBar.addEventListener("pointerdown", e => {
+            dragging = true;
+
+            offsetX = e.clientX - pop.offsetLeft;
+            offsetY = e.clientY - pop.offsetTop;
+
+            titleBar.setPointerCapture(e.pointerId);
+        });
+        titleBar.addEventListener("pointermove", e => {
+            if (!dragging) return;
+
+            pop.style.left = `${e.clientX - offsetX}px`;
+            pop.style.top = `${e.clientY - offsetY}px`;
+        });
+        titleBar.addEventListener("pointerup", e => {
+            dragging = false;
+            titleBar.releasePointerCapture(e.pointerId);
+        });
 
         document.body.append(pop);
     }
