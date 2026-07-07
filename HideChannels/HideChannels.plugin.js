@@ -2,7 +2,7 @@
 * @name Hide Channels 
 * @author GentlePuppet 
 * @authorId 199263542833053696 
-* @version 1.0 
+* @version 1.0.1 
 * @description A plugin that lets you hide channels. 
 */
 
@@ -205,22 +205,14 @@ module.exports = class {
         save.textContent = "Save";
 
         save.onclick = () => {
+            const currentGuild = this.getCurrentGuildID();
+            if (!currentGuild) return;
 
             const parsed = this.parseLinks(box.value);
 
-            for (const guild in parsed) {
-                if (!this.settings.channelsByGuild[guild]) {
-                    this.settings.channelsByGuild[guild] = [];
-                }
-
-                const existing = new Set(this.settings.channelsByGuild[guild]);
-
-                for (const channel of parsed[guild]) {
-                    existing.add(channel);
-                }
-
-                this.settings.channelsByGuild[guild] = [...existing];
-            }
+            // Replace this guild's saved channels with exactly what's in the editor.
+            this.settings.channelsByGuild[currentGuild] =
+                parsed[currentGuild] ?? [];
 
             this.save();
             this.refresh();
