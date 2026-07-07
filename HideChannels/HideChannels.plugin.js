@@ -2,7 +2,7 @@
 * @name Hide Channels 
 * @author GentlePuppet 
 * @authorId 199263542833053696 
-* @version 1.0.2
+* @version 1.0.3
 * @description A plugin that lets you hide channels. 
 */
 
@@ -201,6 +201,21 @@ module.exports = class {
         });
         pop.append(titleBar);
 
+        const close = document.createElement("button");
+        close.textContent = "✕";
+        Object.assign(close.style, {
+            marginLeft: "auto",
+            background: "transparent",
+            border: "none",
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: "16px",
+            zIndex: "9999"
+        });
+        close.onclick = () => pop.remove();
+        close.addEventListener("pointerdown", e => e.stopPropagation());
+        titleBar.append(close);
+
         const content = document.createElement("div");
         Object.assign(content.style, {
             padding: "10px 15px 10px 10px",
@@ -259,7 +274,7 @@ module.exports = class {
         let dragging = false;
         let offsetX = 0;
         let offsetY = 0;
-        titleBar.addEventListener("pointerdown", e => {
+        titleBar.addEventListener("pointerdown", e => {            
             dragging = true;
 
             offsetX = e.clientX - pop.offsetLeft;
