@@ -1,5 +1,5 @@
 # BetterDiscordPlugins
-This is where I store the plugins I make for BetterDiscord.\
+This is where I store the plugins I make, primarily for my own use, for BetterDiscord.\
 I mainly make these for my own use, but you are welcome to use them too.\
 <br>Click the links for more detailed info for each plugin.
 
