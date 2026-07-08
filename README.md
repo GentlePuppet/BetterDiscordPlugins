@@ -1,4 +1,4 @@
-# BetterDiscordPlugins
+# $$\color{#80aaff}{\text{BetterDiscordPlugins}}$$
 This is where I store the plugins I make for BetterDiscord.\
 I mainly make these for my own use, but you are welcome to use them too.\
 <br>Click the `▶ Description` in each section for details about each plugin.
