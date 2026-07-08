@@ -33,9 +33,11 @@ This is my own version that is less excessively built and won't make you crash w
 <details>
   <summary>A simple BetterDiscord plugin that lets you hide channels, per server.</summary>
 <br>
-You can separate the channel urls with a comma or a new line.<br>
+You can separate the channel urls with a comma or a new line.
   
 When you show the hidden channels they will have a black background to mark them as `Hidden`.
+
+Right-click a channel and select `Copy Link` then paste the link the settings text box then `Save & Close`.
 
 <br>
 <img height="400" src="https://github.com/user-attachments/assets/bb3977d4-4445-4caa-913c-f53428ae56ac" />
