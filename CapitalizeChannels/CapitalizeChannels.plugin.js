@@ -1,7 +1,7 @@
 /**
  * @name Capitalize Channel Names
  * @author GentlePuppet
- * @version 1.0.2
+ * @version 1.0.3
  * @description Replaces underscores and dashes with spaces and capitalizes channel names.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/CapitalizeChannels/CapitalizeChannels.plugin.js
@@ -13,53 +13,18 @@ module.exports = class {
         this.pending = false;
         this.queue = new Set();
 
-        this.observer = new MutationObserver(mutations => {
-            for (const m of mutations) {
-                if (m.type === "characterData") {
-                    const parent = m.target.parentElement;
-                    if (parent) this.queue.add(parent);
-                    continue;
-                }
-
-                for (const node of m.addedNodes) {
-                    if (node.nodeType !== 1) continue;
-
-                    if (node.matches?.('a[href^="/channels/"]')) {
-                        this.queue.add(node);
-                    }
-
-                    const found = node.querySelectorAll?.('a[href^="/channels/"]') || [];
-                    if (found.length) {
-                    }
-
-                    const foundHeaders = node.querySelectorAll?.('[class*="overflow"]') || [];
-                    foundHeaders.forEach(h => this.queue.add(h));
-
-                    found.forEach(c => {
-                        this.queue.add(c);
-                    });
-                }
-            }
-
-            if (this.pending) {
-                return;
-            }
-
-            this.pending = true;
-
-            this.frame = requestAnimationFrame(() => {
-                for (const node of this.queue) {
-                    this.processNode(node);
-                }
-                this.queue.clear();
-                this.pending = false;
-            });
+        let timeout;
+        this.observer = new MutationObserver(() => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                document.querySelectorAll(
+                    'a[href^="/channels/"], [class*="overflow"]'
+                ).forEach(node => this.processNode(node));
+            }, 50);
         });
-
         this.observer.observe(document.body, {
             childList: true,
-            subtree: true,
-            characterData: true
+            subtree: true
         });
 
         document.querySelectorAll('a[href^="/channels/"]').forEach(node => this.processNode(node));
@@ -98,18 +63,32 @@ module.exports = class {
 
         if (!nameNode) return;
 
+        // Replacement already exists, nothing else to do.
+        const existingReplacement = nameNode.nextElementSibling;
+        if (existingReplacement?.classList.contains("capitalized-channel-name")) {
+            return;
+        }
+
         const current = nameNode.textContent?.trim();
         if (!current) return;
 
-        const last = this.processedChannels?.get(nameNode);
-        if (last === current) return;
-
         const formatted = this.formatChannelName(current);
-        if (formatted !== current) {
-            nameNode.textContent = formatted;
-        }
 
-        this.processedChannels.set(nameNode, formatted);
+        // No formatting change needed.
+        if (formatted === current) return;
+
+        // Hide the original React-owned node.
+        nameNode.style.display = "none";
+
+        // Create replacement.
+        const replacement = document.createElement("span");
+        replacement.classList.add(...nameNode.classList);
+        replacement.classList.add("capitalized-channel-name");
+        replacement.textContent = formatted;
+
+        nameNode.after(replacement);
+
+        this.processedChannels.set(nameNode, current);
     }
 
     formatChannelName(name) {
