@@ -2,7 +2,7 @@
 * @name Hide Channels 
 * @author GentlePuppet 
 * @authorId 199263542833053696 
-* @version 1.0.5
+* @version 1.0.7
 * @description A plugin that lets you hide channels. 
 */
 
@@ -106,7 +106,7 @@ module.exports = class {
             styleSheet.className = "hc-style"
             styleSheet.textContent = `
                 [aria-label="Channels"] {margin-top: 20px}
-                .hc-root {margin-top: -20px; position: fixed; z-index: 1; width: 100%}
+                .hc-root {margin-top: -20px; position: absolute; z-index: 3; width: 100%}
                 .hc-button {width: 50%; color: #ffffff; text-shadow: 0px 0px 4px black;}
             `;
             document.body.append(styleSheet)
@@ -123,7 +123,7 @@ module.exports = class {
             toggle.className = "hc-toggle hc-button"
             toggle.textContent = "Show"
             toggle.style.background = "#016337"
-            toggle.style.marginLeft = "-5px"
+            toggle.style.marginLeft = "0px"
             toggle.onclick = () => {
                 this.hidden = !this.hidden
                 toggle.textContent = this.hidden ? "Show" : "Hide"
