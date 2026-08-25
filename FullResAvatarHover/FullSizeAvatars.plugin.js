@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.3.2
+ * @version 5.3.3
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,8 +32,12 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.3.2"
+const version = "5.3.3"
 const changelog = {
+    "5.3.3": [
+        `- Better support for DM group chat images.`,
+        `- Better Support for decoration previews in the nitro shop.`
+    ],
     "5.3.2": [
         `- Fixed chat avatars not popping out.`,
         `- Tiny optimization to the hover tracking.`
@@ -484,15 +488,23 @@ module.exports = class {
         const decorationImg =
             avatarContainer?.querySelector('[class*="avatarDecoration"] img') ||
             avatarContainer?.parentElement?.querySelector('[class*="avatarDecoration"] img');
+        const groupchatContainer = avatarContainer?.closest('[aria-label*="(group message)"]');
+        const decorationPreview = avatarContainer?.closest('[aria-label*="Avatar Decoration Preview"]');
 
         let avatarImg = null;
         let isChatAvatar = false;
+        let isGroupChat = false;
 
         if (directImg) {
             avatarImg = directImg;
             isChatAvatar = true;
         } else if (avatarContainer) {
             avatarImg = avatarContainer.querySelector('img');
+        }
+
+        if (groupchatContainer || decorationPreview) {
+            isChatAvatar = true;
+            isGroupChat = true;
         }
         
         if (!avatarImg) {
