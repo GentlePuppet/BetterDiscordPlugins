@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.3.3
+ * @version 5.3.4
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,11 +32,13 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.3.3"
+const version = "5.3.4"
 const changelog = {
+    "5.3.4": [
+        `- Added the option to change the size of the status border of the popout.`
+    ],
     "5.3.3": [
-        `- Better support for DM group chat images.`,
-        `- Better Support for decoration previews in the nitro shop.`
+        `- Better DM group chat support.`
     ],
     "5.3.2": [
         `- Fixed chat avatars not popping out.`,
@@ -107,6 +109,7 @@ const defaultConfig = {
     SilentUpdates: 0,
     imagesize: 512,
     panelsize: 256,
+    bordersize: 5,
     decoration: 1,
     focushover: 1,
     showchangelog: 0,
@@ -182,10 +185,10 @@ module.exports = class {
         
 
         ip.setAttribute("class", "IPH FullSizeAvatarHover");
-        ip.setAttribute("style", "display:none;height:" + Number(config.panelsize + 5) + "px;width:" + Number(config.panelsize + 5) + "px;padding:5px;z-index:999999;position:absolute;pointer-events:none;transition: top 0.1s ease, left 0.1s ease;");
+        ip.setAttribute("style", "display:none;height:" + Number(config.panelsize + Number(config.bordersize)) + "px;width:" + Number(config.panelsize + Number(config.bordersize)) + "px;padding:" + Number(config.bordersize) + "px;z-index:999999;position:absolute;pointer-events:none;transition: top 0.1s ease, left 0.1s ease;");
 
         dp.setAttribute("class", "DPH FullSizeAvatarHover");
-        dp.setAttribute("style", "display:none;height:" + Number(config.panelsize + 65) + "px;width:" + Number(config.panelsize + 65) + "px;margin: 0px 0px -15px -15px;padding:5px;z-index:9999999;position:absolute;pointer-events:none;transition: top 0.1s ease, left 0.1s ease;");
+        dp.setAttribute("style", "display:none;height:" + Number(config.panelsize + 60 + Number(config.bordersize)) + "px;width:" + Number(config.panelsize + 60 + Number(config.bordersize)) + "px;margin: 0px 0px -15px -15px;padding:" + Number(config.bordersize) + "px;z-index:9999999;position:absolute;pointer-events:none;transition: top 0.1s ease, left 0.1s ease;");
 
         document.body.after(dp);
         dp.after(ip);
@@ -295,6 +298,7 @@ module.exports = class {
     
         const imageSizeInput = makeNumber(config.imagesize);
         const panelSizeInput = makeNumber(config.panelsize);
+        const borderSizeInput = makeNumber(config.bordersize);
     
         addSetting("Check For Updates Automatically", enableUpdatesInput);
         addSetting("Automatically Update Silently", silentUpdatesInput);
@@ -302,6 +306,7 @@ module.exports = class {
         addSetting("Require Discord Focus To Display Popout", focushoverInput);
         addSetting("Avatar Resolution", imageSizeInput);
         addSetting("Avatar Panel Size", panelSizeInput);
+        addSetting("Status Border Size", borderSizeInput);
     
         this.settingsPanel.appendChild(grid);
     
@@ -387,18 +392,21 @@ module.exports = class {
                 config.focushover   = focushoverInput.checked ? 1 : 0;
                 config.imagesize    = parseInt(imageSizeInput.value);
                 config.panelsize    = parseInt(panelSizeInput.value);
+                config.bordersize    = parseInt(borderSizeInput.value);
     
                 // Update panel sizes instantly
                 const ip = document.querySelector("img.IPH");
                 const dp = document.querySelector("img.DPH");
     
                 if (ip) {
-                    ip.style.height = `${config.panelsize + 5}px`;
-                    ip.style.width  = `${config.panelsize + 5}px`;
+                    ip.style.height = `${config.panelsize + config.bordersize}px`;
+                    ip.style.width  = `${config.panelsize + config.bordersize}px`;
+                    ip.style.padding  = `${config.bordersize}px`;
                 }
                 if (dp) {
-                    dp.style.height = `${config.panelsize + 65}px`;
-                    dp.style.width  = `${config.panelsize + 65}px`;
+                    dp.style.height = `${config.panelsize + 60 + config.bordersize}px`;
+                    dp.style.width  = `${config.panelsize + 60 + config.bordersize}px`;
+                    dp.style.padding  = `${config.bordersize}px`;
                 }
     
                 this.saveConfigToFile();
