@@ -2,8 +2,11 @@
 * @name Hide Channels 
 * @author GentlePuppet 
 * @authorId 199263542833053696 
-* @version 1.0.8
-* @description A plugin that lets you hide channels. 
+* @version 1.0.9
+* @description A plugin that lets you hide individual channels.
+* @website https://github.com/GentlePuppet/BetterDiscordPlugins/
+* @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/refs/heads/main/Hide%20Channels/HideChannelsGP.plugin.js
+* @updateUrl https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/refs/heads/main/Hide%20Channels/HideChannelsGP.plugin.js
 */
 
 const { Data } = BdApi;
