@@ -48,7 +48,7 @@ Right-click a channel and select `Copy Link` then paste the link the settings te
 
 ### $$\color{#00ff45}{\text{📁 Installation}}$$
 
-1. Download the [HideChannels.plugin.js](https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/refs/heads/main/Hide%20Channels/HideChannels.plugin.js) file.
+1. Download the [HideChannels.plugin.js](https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/refs/heads/main/Hide%20Channels/HideChannelsGP.plugin.js) file.
 2. Place it in your BetterDiscord plugins folder.
 3. Enable the plugin in BetterDiscord’s plugin settings.
 <hr>
