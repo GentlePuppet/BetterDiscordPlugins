@@ -2,7 +2,7 @@
 * @name Hide Channels 
 * @author GentlePuppet 
 * @authorId 199263542833053696 
-* @version 1.0.7
+* @version 1.0.8
 * @description A plugin that lets you hide channels. 
 */
 
@@ -13,7 +13,7 @@ module.exports = class {
     constructor() {
         this.hidden = true;
         this.observer = null;
-        this.pluginName = "HideChannels";
+        this.pluginName = "HideChannelsGP";
 
         this.settings = BdApi.Data.load(this.pluginName, "settings") ?? {};
 
