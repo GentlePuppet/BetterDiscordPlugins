@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.3.4
+ * @version 5.3.5
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,8 +32,11 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.3.4"
+const version = "5.3.5"
 const changelog = {
+    "5.3.5": [
+        `- Fixed after the BD Update 1.14.2.`
+    ],
     "5.3.4": [
         `- Added the option to change the size of the status border of the popout.`
     ],
@@ -146,7 +149,7 @@ module.exports = class {
     
     constructor() { this.settingsPanel = null; }
     
-    load() {
+    loadConfig() {
         if (fs.existsSync(configFile)) {
             try {
                 const configFileData = fs.readFileSync(configFile, "utf-8");
@@ -156,8 +159,7 @@ module.exports = class {
             } catch (error) {
                 console.error("Error loading config from file:", error);
             }
-        }
-        else {
+        } else {
             try {
                 const configToSave = { ...defaultConfig };
                 delete configToSave.info;
@@ -167,11 +169,12 @@ module.exports = class {
                 console.error("Error saving config to file:", error);
             }
         }
-
     }
 
     //---- Start Plugin
     start() {
+        this.loadConfig();
+
         // Cache the main window
         this.container = document.querySelector("#app-mount");
 
@@ -210,7 +213,7 @@ module.exports = class {
 
         this.CheckifUpdate();
 
-        const shownVersion = BdApi.Data.load(config.info.name, "shownVersion");
+        const shownVersion = BdApi.Data.load(defaultConfig.info.name, "shownVersion");
         if (!shownVersion)
             this.showChangelog();
         else if (shownVersion !== defaultConfig.info.version) 
@@ -453,6 +456,14 @@ module.exports = class {
         }
     }
 
+    stop() {
+        window.removeEventListener("focus", this.onFocus);
+        window.removeEventListener("blur", this.onBlur);
+        document.removeEventListener('mousemove', this.mouseMoveEvent);
+        const PanelElements = document.querySelectorAll(".FullSizeAvatarHover")
+        if (PanelElements) { PanelElements.forEach(element => {element.remove()})}
+    }
+
     //---- Track Mouse Event Handler
     mouseMoveEvent = (mousemovedata) => {
         this.lastMouse = {clientX: mousemovedata.clientX, clientY: mousemovedata.clientY, pageX: mousemovedata.pageX, pageY: mousemovedata.pageY};
@@ -464,14 +475,6 @@ module.exports = class {
             });
         }
     };
-
-    stop() {
-        window.removeEventListener("focus", this.onFocus);
-        window.removeEventListener("blur", this.onBlur);
-        document.removeEventListener('mousemove', this.mouseMoveEvent);
-        const PanelElements = document.querySelectorAll(".FullSizeAvatarHover")
-        if (PanelElements) { PanelElements.forEach(element => {element.remove()})}
-    }
 
     //---- Track Mouse Event and Check If Hovering Over Avatars
     mouseMoveFunction(cursorPos) {
