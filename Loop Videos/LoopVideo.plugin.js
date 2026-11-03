@@ -2,20 +2,28 @@
  * @name Looping Videos Plugin
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 1.0
+ * @version 1.0.1
  * @description A plugin that makes videos loop when they are played.
  */
 
 module.exports = class {
     start() {
-        document.addEventListener("mousemove", this.lvfe);
+        document.addEventListener("mousemove", this.mousemoveevent);
     };
     
     //---- Track Mouse Event Handler
-    lvfe = (e) => this.addLoopAttributeToVideo(e);
+    mousemoveevent = (e) => {
+        if (!this.frameUpdatePending) {
+            this.frameUpdatePending = true;
+            requestAnimationFrame(() => {
+                this.frameUpdatePending = false;
+                this.addLoopAttributeToVideo(e);
+            });
+        }
+    };
     
     stop() {
-        document.removeEventListener('mousemove', this.lvfe);
+        document.removeEventListener('mousemove', this.mousemoveevent);
     };
     
     addLoopAttributeToVideo(e) {
