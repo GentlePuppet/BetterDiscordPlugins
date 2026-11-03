@@ -17,8 +17,6 @@ module.exports = class {
         this.hidden = true;
         this.observer = null;
         this.pluginName = "HideChannelsGP";
-        this.storeUnsubs = [];
-        this.refreshTimeout = null;
 
         this.settings = BdApi.Data.load(this.pluginName, "settings") ?? {};
 
@@ -28,33 +26,21 @@ module.exports = class {
 
         this.GuildChannelStore = BdApi.Webpack.getStore("GuildChannelStore");
         this.ChannelStore = BdApi.Webpack.getStore("ChannelStore");
-        this.SelectedGuildStore = BdApi.Webpack.getStore("SelectedGuildStore");
-        this.SelectedChannelStore = BdApi.Webpack.getStore("SelectedChannelStore");
     }
 
     start() {
-        // Fast path: react immediately to guild / channel selection changes
-        const onStoreChange = () => this.scheduleRefresh(16);
-        if (this.SelectedGuildStore?.addChangeListener) {
-            this.storeUnsubs.push(this.SelectedGuildStore.addChangeListener(onStoreChange));
-        }
-        if (this.SelectedChannelStore?.addChangeListener) {
-            this.storeUnsubs.push(this.SelectedChannelStore.addChangeListener(onStoreChange));
-        }
-
-        // Lightweight backup observer for dynamic channel list updates
         let timeout;
         this.observer = new MutationObserver(() => {
             clearTimeout(timeout);
-            timeout = setTimeout(() => this.scheduleRefresh(30), 30);
+            timeout = setTimeout(() => {
+                this.injectButtons();
+                this.refresh()
+            }, 50);
         });
         this.observer.observe(document.body, {
             childList: true,
             subtree: true
         });
-
-        this.injectButtons();
-        this.refresh();
     }
 
     stop() {
@@ -63,9 +49,6 @@ module.exports = class {
         document.querySelector(".hc-style")?.remove();
 
         this.observer?.disconnect();
-        this.storeUnsubs.forEach(unsub => unsub?.());
-        this.storeUnsubs = [];
-        clearTimeout(this.refreshTimeout);
 
         this.showEverything();
     }
@@ -74,23 +57,18 @@ module.exports = class {
         BdApi.Data.save(this.pluginName, "settings", this.settings);
     }
 
-    scheduleRefresh(delay = 16) {
-        clearTimeout(this.refreshTimeout);
-        this.refreshTimeout = setTimeout(() => {
-            this.injectButtons();
-            this.refresh();
-        }, delay);
-    }
-
+    // Extract channel ID from a channel list row (works for text + voice)
     getChannelIdFromRow(row) {
         if (!row) return null;
 
+        // 1. Classic text channel link
         const link = row.querySelector('a[href*="/channels/"]');
         if (link) {
             const match = link.getAttribute("href")?.match(/^\/channels\/(\d+)\/(\d+)$/);
             if (match) return match[2];
         }
 
+        // 2. data-list-item-id (common for both text and voice)
         const listItemId = row.getAttribute("data-list-item-id") || 
                            row.querySelector("[data-list-item-id]")?.getAttribute("data-list-item-id");
         if (listItemId) {
@@ -98,6 +76,7 @@ module.exports = class {
             if (idMatch) return idMatch[1];
         }
 
+        // 3. Any element with a data attribute containing a snowflake
         const dataEl = row.querySelector("[data-channel-id], [data-id]");
         if (dataEl) {
             const id = dataEl.getAttribute("data-channel-id") || dataEl.getAttribute("data-id");
@@ -125,6 +104,7 @@ module.exports = class {
 
             row.style.display = shouldHide ? "none" : "";
 
+            // Highlight when "Show" mode is on
             const target = row.querySelector('a') || row.querySelector('[role="button"]') || row;
             if (target) {
                 target.style.background = shouldHighlight ? "black" : "";
@@ -144,15 +124,19 @@ module.exports = class {
     }
 
     injectButtons() {
-        const header = document.querySelector('[aria-label="Channels"]');
+        const header = document.querySelector('[aria-label="Channels"]')
+        const root = document.createElement("hc-container")
+        const toggle = document.createElement("button")
+        const config = document.createElement("button")
+
         if (!header) {
             document.querySelector(".hc-root")?.remove();
             return;
         }
 
         if (!document.querySelector('.hc-style')) {
-            const styleSheet = document.createElement("style");
-            styleSheet.className = "hc-style";
+            const styleSheet = document.createElement("style")
+            styleSheet.className = "hc-style"
             styleSheet.textContent = `
                 [aria-label="Channels"] {margin-top: 20px}
                 .hc-root {margin-top: -20px; position: absolute; z-index: 3; width: 100%}
@@ -167,43 +151,38 @@ module.exports = class {
                 .hc-channel label {flex: 1; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
                 .hc-channel input {cursor: pointer;}
             `;
-            document.body.append(styleSheet);
+            document.body.append(styleSheet)
         }
 
         if (!document.querySelector(".hc-root")) {
-            const root = document.createElement("hc-container");
-            root.className = "hc-root";
-            header.prepend(root);
+            root.className = "hc-root"
+            header.prepend(root)
+        }
 
-            const toggle = document.createElement("button");
-            toggle.className = "hc-toggle hc-button";
-            toggle.textContent = "Show";
-            toggle.style.background = "#016337";
-            toggle.style.marginLeft = "0px";
+        if (!document.querySelector(".hc-toggle")) {
+            toggle.className = "hc-toggle hc-button"
+            toggle.textContent = "Show"
+            toggle.style.background = "#016337"
+            toggle.style.marginLeft = "0px"
             toggle.onclick = () => {
-                this.hidden = !this.hidden;
-                toggle.textContent = this.hidden ? "Show" : "Hide";
-                toggle.style.background = this.hidden ? "#016337" : "#630101";
-                this.refresh();
-            };
-            root.append(toggle);
+                this.hidden = !this.hidden
+                toggle.textContent = this.hidden ? "Show" : "Hide"
+                toggle.style.background = this.hidden ? "#016337" : "#630101"
+                this.refresh()
+            }
+            root.append(toggle)
+        }
 
-            const config = document.createElement("button");
-            config.className = "hc-config hc-button";
-            config.textContent = "Settings";
-            config.style.background = "#00496b";
-            config.onclick = () => this.openEditor();
-            root.append(config);
+        if (!document.querySelector(".hc-config")) {
+            config.className = "hc-config hc-button"
+            config.textContent = "Settings"
+            config.style.background = "#00496b"
+            config.onclick = () => this.openEditor()
+            root.append(config)
         }
     }
 
     getCurrentGuildID() {
-        // Prefer the store for accuracy/speed
-        if (this.SelectedGuildStore?.getGuildId) {
-            const id = this.SelectedGuildStore.getGuildId();
-            if (id) return id;
-        }
-
         const link = document.querySelector('[aria-label="Channels"] a[href*="/channels/"]');
         if (!link) return null;
 
