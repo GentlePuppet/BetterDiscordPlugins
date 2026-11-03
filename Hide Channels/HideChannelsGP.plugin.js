@@ -78,7 +78,7 @@ module.exports = class {
         return null;
     }
 
-    observer() {
+    onSwitch() {
         let timeout;
         clearTimeout(timeout);
         timeout = setTimeout(() => {
