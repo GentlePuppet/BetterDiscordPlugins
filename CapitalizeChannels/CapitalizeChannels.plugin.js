@@ -1,7 +1,8 @@
 /**
  * @name Capitalize Channel Names
  * @author GentlePuppet
- * @version 1.0.3
+ * @authorId 199263542833053696 
+ * @version 1.1.0
  * @description Replaces underscores and dashes with spaces and capitalizes channel names.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/CapitalizeChannels/CapitalizeChannels.plugin.js
@@ -13,37 +14,19 @@ module.exports = class {
         this.pending = false;
         this.queue = new Set();
 
-        let timeout;
-        this.observer = new MutationObserver(() => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                document.querySelectorAll(
-                    'a[href^="/channels/"], [class*="overflow"]'
-                ).forEach(node => this.processNode(node));
-            }, 50);
-        });
-        this.observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-
         document.querySelectorAll('a[href^="/channels/"]').forEach(node => this.processNode(node));
         document.querySelectorAll('[class*="overflow"]').forEach(node => this.processNode(node));
     }
 
     stop() {
-        if (this.frame) {
-            cancelAnimationFrame(this.frame);
-            this.frame = null;
-        }
-
-        if (this.observer) {
-            this.observer.disconnect();
-            this.observer = null;
-        }
-
         this.processedChannels = null;
         this.queue = null;
+    }
+
+    observer() {
+        document.querySelectorAll(
+            'a[href^="/channels/"], [class*="overflow"]'
+        ).forEach(node => this.processNode(node));
     }
 
     processNode(node) {
