@@ -2,7 +2,7 @@
 * @name Hide Channels 
 * @author GentlePuppet 
 * @authorId 199263542833053696 
-* @version 1.0.9
+* @version 1.1.0
 * @description A plugin that lets you hide individual channels.
 * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
 * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/refs/heads/main/Hide%20Channels/HideChannelsGP.plugin.js
@@ -17,28 +17,44 @@ module.exports = class {
         this.hidden = true;
         this.observer = null;
         this.pluginName = "HideChannelsGP";
+        this.storeUnsubs = [];
+        this.refreshTimeout = null;
 
         this.settings = BdApi.Data.load(this.pluginName, "settings") ?? {};
 
         if (!this.settings.channelsByGuild) {
             this.settings.channelsByGuild = {};
         }
+
+        this.GuildChannelStore = BdApi.Webpack.getStore("GuildChannelStore");
+        this.ChannelStore = BdApi.Webpack.getStore("ChannelStore");
+        this.SelectedGuildStore = BdApi.Webpack.getStore("SelectedGuildStore");
+        this.SelectedChannelStore = BdApi.Webpack.getStore("SelectedChannelStore");
     }
 
     start() {
+        // Fast path: react immediately to guild / channel selection changes
+        const onStoreChange = () => this.scheduleRefresh(16);
+        if (this.SelectedGuildStore?.addChangeListener) {
+            this.storeUnsubs.push(this.SelectedGuildStore.addChangeListener(onStoreChange));
+        }
+        if (this.SelectedChannelStore?.addChangeListener) {
+            this.storeUnsubs.push(this.SelectedChannelStore.addChangeListener(onStoreChange));
+        }
+
+        // Lightweight backup observer for dynamic channel list updates
         let timeout;
         this.observer = new MutationObserver(() => {
             clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                this.injectButtons();
-                this.refresh()
-            }, 50);
+            timeout = setTimeout(() => this.scheduleRefresh(30), 30);
         });
         this.observer.observe(document.body, {
             childList: true,
             subtree: true
         });
 
+        this.injectButtons();
+        this.refresh();
     }
 
     stop() {
@@ -47,6 +63,9 @@ module.exports = class {
         document.querySelector(".hc-style")?.remove();
 
         this.observer?.disconnect();
+        this.storeUnsubs.forEach(unsub => unsub?.());
+        this.storeUnsubs = [];
+        clearTimeout(this.refreshTimeout);
 
         this.showEverything();
     }
@@ -55,124 +74,177 @@ module.exports = class {
         BdApi.Data.save(this.pluginName, "settings", this.settings);
     }
 
+    scheduleRefresh(delay = 16) {
+        clearTimeout(this.refreshTimeout);
+        this.refreshTimeout = setTimeout(() => {
+            this.injectButtons();
+            this.refresh();
+        }, delay);
+    }
+
+    getChannelIdFromRow(row) {
+        if (!row) return null;
+
+        const link = row.querySelector('a[href*="/channels/"]');
+        if (link) {
+            const match = link.getAttribute("href")?.match(/^\/channels\/(\d+)\/(\d+)$/);
+            if (match) return match[2];
+        }
+
+        const listItemId = row.getAttribute("data-list-item-id") || 
+                           row.querySelector("[data-list-item-id]")?.getAttribute("data-list-item-id");
+        if (listItemId) {
+            const idMatch = listItemId.match(/(\d{17,20})/);
+            if (idMatch) return idMatch[1];
+        }
+
+        const dataEl = row.querySelector("[data-channel-id], [data-id]");
+        if (dataEl) {
+            const id = dataEl.getAttribute("data-channel-id") || dataEl.getAttribute("data-id");
+            if (id && /^\d{17,20}$/.test(id)) return id;
+        }
+
+        return null;
+    }
+
     refresh() {
         const container = document.querySelector('[aria-label="Channels"]');
         if (!container) return;
 
-        container.querySelectorAll('a[href*="/channels/"]').forEach(link => {
+        const guildID = this.getCurrentGuildID();
+        if (!guildID) return;
 
-            const href = link.getAttribute("href");
+        const hiddenIds = this.settings.channelsByGuild[guildID] ?? [];
 
-            const match = href.match(/^\/channels\/(\d+)\/(\d+)$/);
-            if (!match) return;
+        container.querySelectorAll('li[class*="container"]').forEach(row => {
+            const channelID = this.getChannelIdFromRow(row);
+            if (!channelID) return;
 
-            const guildID = match[1];
-            const channelID = match[2];
-
-            const row = link.closest('li[class*="container"]');
-            if (!row) return;
-
-            const shouldHide = this.hidden && this.settings.channelsByGuild[guildID]?.includes(channelID);
-            const shouldShow = !this.hidden && this.settings.channelsByGuild[guildID]?.includes(channelID);
+            const shouldHide = this.hidden && hiddenIds.includes(channelID);
+            const shouldHighlight = !this.hidden && hiddenIds.includes(channelID);
 
             row.style.display = shouldHide ? "none" : "";
-            row.querySelector('a').style.background = shouldShow ? "black" : "";
+
+            const target = row.querySelector('a') || row.querySelector('[role="button"]') || row;
+            if (target) {
+                target.style.background = shouldHighlight ? "black" : "";
+            }
         });
     }
 
     showEverything() {
-        document
-            .querySelectorAll('a[href*="/channels/"]')
-            .forEach(link => {
-                const row = link.closest('li[class*="container"]');
-                if (row) {
-                    row.style.display = "";
-                    row.querySelector('a').style.background = "";
-                }
-            });
+        const container = document.querySelector('[aria-label="Channels"]');
+        if (!container) return;
+
+        container.querySelectorAll('li[class*="container"]').forEach(row => {
+            row.style.display = "";
+            const target = row.querySelector('a') || row.querySelector('[role="button"]') || row;
+            if (target) target.style.background = "";
+        });
     }
 
     injectButtons() {
-        const header = document.querySelector('[aria-label="Channels"]')
-        const root = document.createElement("hc-container")
-        const toggle = document.createElement("button")
-        const config = document.createElement("button")
-
+        const header = document.querySelector('[aria-label="Channels"]');
         if (!header) {
             document.querySelector(".hc-root")?.remove();
             return;
         }
 
-        // Create Custom Style
         if (!document.querySelector('.hc-style')) {
-            const styleSheet = document.createElement("style")
-            styleSheet.className = "hc-style"
+            const styleSheet = document.createElement("style");
+            styleSheet.className = "hc-style";
             styleSheet.textContent = `
                 [aria-label="Channels"] {margin-top: 20px}
                 .hc-root {margin-top: -20px; position: absolute; z-index: 3; width: 100%}
                 .hc-button {width: 50%; color: #ffffff; text-shadow: 0px 0px 4px black;}
+                .hc-list {max-height: 70vh; overflow-y: auto; padding-right: 4px;}
+                .hc-section {margin: 4px 0; border-radius: 4px; background: #1e1f22; color: #6495ed;}
+                .hc-section summary {padding: 6px 8px; cursor: pointer; font-weight: 600; user-select: none; list-style: none;}
+                .hc-section summary::-webkit-details-marker {display: none;}
+                .hc-section summary:before {content: "▶ "; font-size: 10px; margin-right: 4px;}
+                .hc-section[open] summary:before {content: "▼ ";}
+                .hc-channel {display: flex; align-items: center; padding: 3px 8px 3px 20px; gap: 8px; color: #fff;}
+                .hc-channel label {flex: 1; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+                .hc-channel input {cursor: pointer;}
             `;
-            document.body.append(styleSheet)
+            document.body.append(styleSheet);
         }
 
-        // Create Main container for the Show/Settings Buttons
         if (!document.querySelector(".hc-root")) {
-            root.className = "hc-root"
-            header.prepend(root)
-        }
+            const root = document.createElement("hc-container");
+            root.className = "hc-root";
+            header.prepend(root);
 
-        // Create the Show Button
-        if (!document.querySelector(".hc-toggle")) {
-            toggle.className = "hc-toggle hc-button"
-            toggle.textContent = "Show"
-            toggle.style.background = "#016337"
-            toggle.style.marginLeft = "0px"
+            const toggle = document.createElement("button");
+            toggle.className = "hc-toggle hc-button";
+            toggle.textContent = "Show";
+            toggle.style.background = "#016337";
+            toggle.style.marginLeft = "0px";
             toggle.onclick = () => {
-                this.hidden = !this.hidden
-                toggle.textContent = this.hidden ? "Show" : "Hide"
-                toggle.style.background = this.hidden ? "#016337" : "#630101"
-                this.refresh()
-            }
-            root.append(toggle)
+                this.hidden = !this.hidden;
+                toggle.textContent = this.hidden ? "Show" : "Hide";
+                toggle.style.background = this.hidden ? "#016337" : "#630101";
+                this.refresh();
+            };
+            root.append(toggle);
+
+            const config = document.createElement("button");
+            config.className = "hc-config hc-button";
+            config.textContent = "Settings";
+            config.style.background = "#00496b";
+            config.onclick = () => this.openEditor();
+            root.append(config);
         }
-
-        // Create the Settings Button
-        if (!document.querySelector(".hc-config")) {
-            config.className = "hc-config hc-button"
-            config.textContent = "Settings"
-            config.style.background = "#00496b"
-            config.onclick = () => this.openEditor()
-            root.append(config)
-        }
-
-    }
-
-    parseLinks(text) {
-        const result = {};
-
-        text.split(/[\n,]+/)
-            .map(s => s.trim())
-            .filter(Boolean)
-            .forEach(link => {
-                const match = link.match(/discord\.com\/channels\/(\d+)\/(\d+)/);
-                if (!match) return;
-
-                const guild = match[1];
-                const channel = match[2];
-
-                if (!result[guild]) result[guild] = [];
-                result[guild].push(channel);
-            });
-
-        return result;
     }
 
     getCurrentGuildID() {
+        // Prefer the store for accuracy/speed
+        if (this.SelectedGuildStore?.getGuildId) {
+            const id = this.SelectedGuildStore.getGuildId();
+            if (id) return id;
+        }
+
         const link = document.querySelector('[aria-label="Channels"] a[href*="/channels/"]');
         if (!link) return null;
 
         const match = link.getAttribute("href")?.match(/^\/channels\/(\d+)\/(\d+)$/);
         return match ? match[1] : null;
+    }
+
+    getOrganizedChannels(guildID) {
+        if (!guildID || !this.GuildChannelStore) return { categories: [], uncategorized: [] };
+
+        const data = this.GuildChannelStore.getChannels(guildID);
+        if (!data) return { categories: [], uncategorized: [] };
+
+        const selectable = (data.SELECTABLE || []).map(c => c.channel || c);
+        const vocal = (data.VOCAL || []).map(c => c.channel || c);
+        const allChannels = [...selectable, ...vocal].filter(c => c && c.type !== 4);
+
+        const categoryData = data[4] || data.GUILD_CATEGORY || [];
+        const categories = categoryData
+            .map(c => c.channel || c)
+            .filter(c => c && c.id !== "Uncategorized" && c.name !== "Uncategorized")
+            .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+        const byParent = {};
+        allChannels.forEach(ch => {
+            const parent = ch.parent_id || null;
+            if (!byParent[parent]) byParent[parent] = [];
+            byParent[parent].push(ch);
+        });
+
+        Object.values(byParent).forEach(list => {
+            list.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+        });
+
+        return {
+            categories: categories.map(cat => ({
+                category: cat,
+                channels: byParent[cat.id] || []
+            })).filter(group => group.channels.length > 0),
+            uncategorized: byParent[null] || []
+        };
     }
 
     openEditor() {
@@ -184,7 +256,7 @@ module.exports = class {
             position: "fixed",
             top: "80px",
             left: "120px",
-            width: "500px",
+            width: "420px",
             background: "#2b2d31",
             border: "1px solid #555",
             borderRadius: "6px",
@@ -226,73 +298,94 @@ module.exports = class {
 
         const content = document.createElement("div");
         Object.assign(content.style, {
-            padding: "10px 15px 10px 10px",
-            display: "grid",
+            padding: "10px",
+            maxHeight: "75vh",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column"
         });
         pop.append(content);
 
-        const box = document.createElement("textarea");
-        Object.assign(box.style, {
-            width: "100%",
-            height: "200px",
-            background: "#0e0e0e",
-            color: "#ffffff"
-        });
         const currentGuild = this.getCurrentGuildID();
-        const channels = currentGuild
-            ? (this.settings.channelsByGuild[currentGuild] ?? [])
-            : Object.values(this.settings.channelsByGuild).flat();
-        box.value = channels
-            .map(id => `https://discord.com/channels/${currentGuild}/${id}`)
-            .join("\n");
-        content.append(box);
+        if (!currentGuild) {
+            content.textContent = "No guild selected. Open a server first.";
+            document.body.append(pop);
+            return;
+        }
 
-        const save = document.createElement("button");
-        save.textContent = "Save & Close";
-        Object.assign(save.style, {
-            height: "30px",
-            borderRadius: "2px",
-            background: "#1d9519",
-            color: "#ffffff",
-            borderBottom: "1px solid #555",
-            textShadow: "0px 0px 4px black",
-            alignItems: "center",
-            marginLeft: "auto",
-            marginTop: "10px",
-            marginRight: "-6px",
-            padding: "0px 10px",
+        const hiddenSet = new Set(this.settings.channelsByGuild[currentGuild] ?? []);
+        const { categories, uncategorized } = this.getOrganizedChannels(currentGuild);
 
-        });
-        save.onclick = () => {
-            const currentGuild = this.getCurrentGuildID();
-            if (!currentGuild) return;
+        const list = document.createElement("div");
+        list.className = "hc-list";
+        content.append(list);
 
-            const parsed = this.parseLinks(box.value);
+        const createChannelRow = (channel) => {
+            const row = document.createElement("div");
+            row.className = "hc-channel";
 
-            // Replace this guild's saved channels with exactly what's in the editor.
-            this.settings.channelsByGuild[currentGuild] =
-                parsed[currentGuild] ?? [];
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = hiddenSet.has(channel.id);
+            checkbox.onchange = () => {
+                if (checkbox.checked) {
+                    hiddenSet.add(channel.id);
+                } else {
+                    hiddenSet.delete(channel.id);
+                }
+                this.settings.channelsByGuild[currentGuild] = [...hiddenSet];
+                this.save();
+                this.refresh();
+            };
 
-            this.save();
-            this.refresh();
-            pop.remove();
+            const label = document.createElement("label");
+            label.textContent = channel.name || "Unnamed";
+            label.onclick = () => checkbox.click();
+
+            row.append(checkbox, label);
+            return row;
         };
-        content.append(save);
+
+        if (uncategorized.length) {
+            const details = document.createElement("details");
+            details.className = "hc-section";
+            const summary = document.createElement("summary");
+            summary.textContent = "Uncategorized";
+            details.append(summary);
+            uncategorized.forEach(ch => details.append(createChannelRow(ch)));
+            list.append(details);
+        }
+
+        categories.forEach(({ category, channels }) => {
+            const details = document.createElement("details");
+            details.className = "hc-section";
+            const summary = document.createElement("summary");
+            summary.textContent = category.name || "Category";
+            details.append(summary);
+            channels.forEach(ch => details.append(createChannelRow(ch)));
+            list.append(details);
+        });
+
+        if (!list.children.length) {
+            list.textContent = "No channels found.";
+        }
+
+        const note = document.createElement("div");
+        note.style.cssText = "margin-top: 10px; font-size: 12px; color: #aaa; text-align: center;";
+        note.textContent = "Checked = hidden";
+        content.append(note);
 
         let dragging = false;
         let offsetX = 0;
         let offsetY = 0;
         titleBar.addEventListener("pointerdown", e => {
             dragging = true;
-
             offsetX = e.clientX - pop.offsetLeft;
             offsetY = e.clientY - pop.offsetTop;
-
             titleBar.setPointerCapture(e.pointerId);
         });
         titleBar.addEventListener("pointermove", e => {
             if (!dragging) return;
-
             pop.style.left = `${e.clientX - offsetX}px`;
             pop.style.top = `${e.clientY - offsetY}px`;
         });
