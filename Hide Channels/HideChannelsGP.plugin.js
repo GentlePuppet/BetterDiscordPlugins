@@ -2,7 +2,7 @@
 * @name Hide Channels 
 * @author GentlePuppet 
 * @authorId 199263542833053696 
-* @version 1.1.0
+* @version 1.1.1
 * @description A plugin that lets you hide individual channels.
 * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
 * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/refs/heads/main/Hide%20Channels/HideChannelsGP.plugin.js
@@ -13,34 +13,21 @@ const { Data } = BdApi;
 
 module.exports = class {
 
-    constructor() {
+    start() {
         this.hidden = true;
-        this.observer = null;
         this.pluginName = "HideChannelsGP";
+        this.isRefreshing = false;
 
         this.settings = BdApi.Data.load(this.pluginName, "settings") ?? {};
-
-        if (!this.settings.channelsByGuild) {
-            this.settings.channelsByGuild = {};
-        }
+        if (!this.settings.channelsByGuild) this.settings.channelsByGuild = {};
 
         this.GuildChannelStore = BdApi.Webpack.getStore("GuildChannelStore");
         this.ChannelStore = BdApi.Webpack.getStore("ChannelStore");
-    }
+        this.SelectedGuildStore = BdApi.Webpack.getStore("SelectedGuildStore");
+        this.SelectedChannelStore = BdApi.Webpack.getStore("SelectedChannelStore");
 
-    start() {
-        let timeout;
-        this.observer = new MutationObserver(() => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                this.injectButtons();
-                this.refresh()
-            }, 50);
-        });
-        this.observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
+        this.injectButtons();
+        this.refresh();
     }
 
     stop() {
@@ -48,68 +35,7 @@ module.exports = class {
         document.querySelector(".hc-root")?.remove();
         document.querySelector(".hc-style")?.remove();
 
-        this.observer?.disconnect();
-
         this.showEverything();
-    }
-
-    save() {
-        BdApi.Data.save(this.pluginName, "settings", this.settings);
-    }
-
-    // Extract channel ID from a channel list row (works for text + voice)
-    getChannelIdFromRow(row) {
-        if (!row) return null;
-
-        // 1. Classic text channel link
-        const link = row.querySelector('a[href*="/channels/"]');
-        if (link) {
-            const match = link.getAttribute("href")?.match(/^\/channels\/(\d+)\/(\d+)$/);
-            if (match) return match[2];
-        }
-
-        // 2. data-list-item-id (common for both text and voice)
-        const listItemId = row.getAttribute("data-list-item-id") || 
-                           row.querySelector("[data-list-item-id]")?.getAttribute("data-list-item-id");
-        if (listItemId) {
-            const idMatch = listItemId.match(/(\d{17,20})/);
-            if (idMatch) return idMatch[1];
-        }
-
-        // 3. Any element with a data attribute containing a snowflake
-        const dataEl = row.querySelector("[data-channel-id], [data-id]");
-        if (dataEl) {
-            const id = dataEl.getAttribute("data-channel-id") || dataEl.getAttribute("data-id");
-            if (id && /^\d{17,20}$/.test(id)) return id;
-        }
-
-        return null;
-    }
-
-    refresh() {
-        const container = document.querySelector('[aria-label="Channels"]');
-        if (!container) return;
-
-        const guildID = this.getCurrentGuildID();
-        if (!guildID) return;
-
-        const hiddenIds = this.settings.channelsByGuild[guildID] ?? [];
-
-        container.querySelectorAll('li[class*="container"]').forEach(row => {
-            const channelID = this.getChannelIdFromRow(row);
-            if (!channelID) return;
-
-            const shouldHide = this.hidden && hiddenIds.includes(channelID);
-            const shouldHighlight = !this.hidden && hiddenIds.includes(channelID);
-
-            row.style.display = shouldHide ? "none" : "";
-
-            // Highlight when "Show" mode is on
-            const target = row.querySelector('a') || row.querySelector('[role="button"]') || row;
-            if (target) {
-                target.style.background = shouldHighlight ? "black" : "";
-            }
-        });
     }
 
     showEverything() {
@@ -123,20 +49,94 @@ module.exports = class {
         });
     }
 
-    injectButtons() {
-        const header = document.querySelector('[aria-label="Channels"]')
-        const root = document.createElement("hc-container")
-        const toggle = document.createElement("button")
-        const config = document.createElement("button")
+    save() {
+        BdApi.Data.save(this.pluginName, "settings", this.settings);
+    }
 
+    getChannelIdFromRow(row) {
+        if (!row) return null;
+
+        const link = row.querySelector('a[href*="/channels/"]');
+        if (link) {
+            const match = link.getAttribute("href")?.match(/^\/channels\/(\d+)\/(\d+)$/);
+            if (match) return match[2];
+        }
+
+        const listItemId = row.getAttribute("data-list-item-id") || 
+                           row.querySelector("[data-list-item-id]")?.getAttribute("data-list-item-id");
+        if (listItemId) {
+            const idMatch = listItemId.match(/(\d{17,20})/);
+            if (idMatch) return idMatch[1];
+        }
+
+        const dataEl = row.querySelector("[data-channel-id], [data-id]");
+        if (dataEl) {
+            const id = dataEl.getAttribute("data-channel-id") || dataEl.getAttribute("data-id");
+            if (id && /^\d{17,20}$/.test(id)) return id;
+        }
+
+        return null;
+    }
+
+    observer() {
+        let timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            this.injectButtons();
+            this.refresh()
+        }, 1);
+    }
+
+    refresh() {
+        if (this.isRefreshing) return;
+        this.isRefreshing = true;
+
+        try {
+            const container = document.querySelector('[aria-label="Channels"]');
+            if (!container) return;
+
+            const guildID = this.getCurrentGuildID();
+            if (!guildID) return;
+
+            const hiddenIds = this.settings.channelsByGuild[guildID] ?? [];
+
+            container.querySelectorAll('li[class*="container"]').forEach(row => {
+                const channelID = this.getChannelIdFromRow(row);
+                if (!channelID) return;
+
+                const shouldHide = this.hidden && hiddenIds.includes(channelID);
+                const shouldHighlight = !this.hidden && hiddenIds.includes(channelID);
+
+                row.style.display = shouldHide ? "none" : "";
+
+                const target = row.querySelector('a') || row.querySelector('[role="button"]') || row;
+                if (target) {
+                    target.style.background = shouldHighlight ? "black" : "";
+                }
+            })
+            this.syncToggleButton();
+        } finally {
+            this.isRefreshing = false;
+        }
+    }
+
+    syncToggleButton() {
+        const toggle = document.querySelector(".hc-toggle");
+        if (!toggle) return;
+        toggle.textContent = this.hidden ? "Show" : "Hide";
+        toggle.style.background = this.hidden ? "#016337" : "#630101";
+    }
+
+    injectButtons() {
+        const header = document.querySelector('[aria-label="Channels"]');
         if (!header) {
             document.querySelector(".hc-root")?.remove();
             return;
         }
 
         if (!document.querySelector('.hc-style')) {
-            const styleSheet = document.createElement("style")
-            styleSheet.className = "hc-style"
+            const styleSheet = document.createElement("style");
+            styleSheet.className = "hc-style";
             styleSheet.textContent = `
                 [aria-label="Channels"] {margin-top: 20px}
                 .hc-root {margin-top: -20px; position: absolute; z-index: 3; width: 100%}
@@ -151,38 +151,41 @@ module.exports = class {
                 .hc-channel label {flex: 1; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
                 .hc-channel input {cursor: pointer;}
             `;
-            document.body.append(styleSheet)
+            document.body.append(styleSheet);
         }
 
         if (!document.querySelector(".hc-root")) {
-            root.className = "hc-root"
-            header.prepend(root)
-        }
+            const root = document.createElement("div");
+            root.className = "hc-root";
+            header.prepend(root);
 
-        if (!document.querySelector(".hc-toggle")) {
-            toggle.className = "hc-toggle hc-button"
-            toggle.textContent = "Show"
-            toggle.style.background = "#016337"
-            toggle.style.marginLeft = "0px"
+            const toggle = document.createElement("button");
+            toggle.className = "hc-toggle hc-button";
             toggle.onclick = () => {
-                this.hidden = !this.hidden
-                toggle.textContent = this.hidden ? "Show" : "Hide"
-                toggle.style.background = this.hidden ? "#016337" : "#630101"
-                this.refresh()
-            }
-            root.append(toggle)
-        }
+                this.hidden = !this.hidden;
+                this.refresh();
+            };
+            root.append(toggle);
 
-        if (!document.querySelector(".hc-config")) {
-            config.className = "hc-config hc-button"
-            config.textContent = "Settings"
-            config.style.background = "#00496b"
-            config.onclick = () => this.openEditor()
-            root.append(config)
+            const config = document.createElement("button");
+            config.className = "hc-config hc-button";
+            config.textContent = "Settings";
+            config.style.background = "#00496b";
+            config.onclick = () => this.openEditor();
+            root.append(config);
         }
     }
 
+
+    // ==============
+    // Settings Panel
+    //===============
     getCurrentGuildID() {
+        if (this.SelectedGuildStore?.getGuildId) {
+            const id = this.SelectedGuildStore.getGuildId();
+            if (id) return id;
+        }
+
         const link = document.querySelector('[aria-label="Channels"] a[href*="/channels/"]');
         if (!link) return null;
 
