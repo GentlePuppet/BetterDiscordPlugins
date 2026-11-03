@@ -35,6 +35,7 @@ This is my own version that is less excessively built and won't make you crash w
 <br>
   
 When you show the hidden channels they will have a black background to mark them as `Hidden`.
+You can move the settings window around with the title bar and channels are dynamically hidden/shown when selected.
 
 <br>
 <img height="400" src="https://github.com/user-attachments/assets/bb3977d4-4445-4caa-913c-f53428ae56ac" />
