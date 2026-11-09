@@ -2,7 +2,7 @@
  * @name FullResAvatars
  * @author GentlePuppet
  * @authorId 199263542833053696
- * @version 5.3.5
+ * @version 5.3.6
  * @description Hover over avatars to see a bigger version.
  * @website https://github.com/GentlePuppet/BetterDiscordPlugins/
  * @source https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js
@@ -32,10 +32,13 @@
 @else@*/
 
 const source = "https://raw.githubusercontent.com/GentlePuppet/BetterDiscordPlugins/main/FullResAvatarHover/FullSizeAvatars.plugin.js"
-const version = "5.3.5"
+const version = "5.3.6"
 const changelog = {
+    "5.3.6": [
+        `- Fixed the settings panel not loading with the new BD update 1.14.6.`
+    ],
     "5.3.5": [
-        `- Fixed after the BD Update 1.14.2.`
+        `- Fixed after the BD Update 1.14.2`
     ],
     "5.3.4": [
         `- Added the option to change the size of the status border of the popout.`
@@ -225,7 +228,7 @@ module.exports = class {
         const configFileData = fs.readFileSync(configFile, "utf-8");
         const savedConfig = JSON.parse(configFileData);
         config = { ...defaultConfig, ...savedConfig };
-    
+
         // Root container
         this.settingsPanel = document.createElement("div");
         this.settingsPanel.id = "settings-panel";
@@ -234,9 +237,9 @@ module.exports = class {
             font-size: 14px;
             color: var(--header-primary);
             width: fit-content;
-            margin: auto auto auto auto;
+            margin: 0 auto;
         `;
-    
+
         // Grid container
         const grid = document.createElement("div");
         grid.style.cssText = `
@@ -247,7 +250,7 @@ module.exports = class {
             padding: 20px;
             border-radius: 8px;
         `;
-    
+
         // Helper to build labeled inputs 
         const addSetting = (labelText, inputElement) => {
             const label = document.createElement("label");
@@ -258,25 +261,23 @@ module.exports = class {
                 gap: 10px;
                 font-weight: 500;
             `;
-    
+
             inputElement.style.marginLeft = "auto";
             label.appendChild(inputElement);
             grid.appendChild(label);
         };
-    
+
         // Toggle inputs
         const makeToggle = (checked) => {
             const input = document.createElement("input");
             input.type = "checkbox";
             input.checked = checked;
             input.style.cursor = "pointer";
-            input.style.cssText = `
-                width: 24px;
-                height: 24px;
-            `;
+            input.style.width = "24px";
+            input.style.height = "24px";
             return input;
         };
-    
+
         // Number inputs
         const makeNumber = (value) => {
             const input = document.createElement("input");
@@ -292,17 +293,17 @@ module.exports = class {
             `;
             return input;
         };
-    
+
         // Build UI fields
         const enableUpdatesInput     = makeToggle(config.EnableUpdates === 1);
         const silentUpdatesInput     = makeToggle(config.SilentUpdates === 1);
         const enableDecorationsInput = makeToggle(config.decoration === 1);
         const focushoverInput        = makeToggle(config.focushover === 1);
-    
+
         const imageSizeInput = makeNumber(config.imagesize);
         const panelSizeInput = makeNumber(config.panelsize);
         const borderSizeInput = makeNumber(config.bordersize);
-    
+
         addSetting("Check For Updates Automatically", enableUpdatesInput);
         addSetting("Automatically Update Silently", silentUpdatesInput);
         addSetting("Display Avatar Decorations", enableDecorationsInput);
@@ -310,51 +311,40 @@ module.exports = class {
         addSetting("Avatar Resolution", imageSizeInput);
         addSetting("Avatar Panel Size", panelSizeInput);
         addSetting("Status Border Size", borderSizeInput);
-    
+
         this.settingsPanel.appendChild(grid);
-    
-        // Wait for the .bd-modal-content to exist and insert our settings panel
-        const observer = new MutationObserver(() => {
-            const modalContent = document.querySelector(".bd-modal-content");
-            if (!modalContent) return;
-    
-            modalContent.appendChild(this.settingsPanel);
-    
-            // Footer
-            const modalFooter = document.querySelector('.bd-modal-footer');
 
-            const changelogButton = document.createElement("button");
-            changelogButton.textContent = "View Changelog";
-            changelogButton.classList.add("bd-button")
-            changelogButton.classList.add("bd-button-filled")
-            changelogButton.classList.add("bd-button-color-yellow")
-            changelogButton.classList.add("bd-button-medium")
-            changelogButton.classList.add("bd-button-grow")
-            changelogButton.style.cssText = `
-                margin-right: 10px;
-            `;
+        // --- Button row (replaces the old modal footer) ---
+        const buttonRow = document.createElement("div");
+        buttonRow.style.cssText = `
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        `;
 
-            const manualupdateButton = document.createElement("button");
-            manualupdateButton.textContent = "Check for Updates";
-            manualupdateButton.classList.add("bd-button")
-            manualupdateButton.classList.add("bd-button-filled")
-            manualupdateButton.classList.add("bd-button-color-red")
-            manualupdateButton.classList.add("bd-button-medium")
-            manualupdateButton.classList.add("bd-button-grow")
-            manualupdateButton.style.cssText = `
-                margin-right: 10px;
-            `;
+        const changelogButton = document.createElement("button");
+        changelogButton.textContent = "View Changelog";
+        changelogButton.classList.add("bd-button", "bd-button-filled", "bd-button-color-yellow", "bd-button-medium", "bd-button-grow");
 
-            changelogButton.addEventListener("click", () => {
-                this.showChangelog()
-            });
-            manualupdateButton.addEventListener("click", (event) => {
-                this.CheckifUpdate(true).then(upToDate => {
-                    if (upToDate) {
-                        // Toast
-                        const toast = document.createElement("div");
-                        toast.textContent = "Plugin is Up-to-date";
-                        toast.style.cssText = `
+        const manualupdateButton = document.createElement("button");
+        manualupdateButton.textContent = "Check for Updates";
+        manualupdateButton.classList.add("bd-button", "bd-button-filled", "bd-button-color-red", "bd-button-medium", "bd-button-grow");
+
+        const saveButton = document.createElement("button");
+        saveButton.textContent = "Save Settings";
+        saveButton.classList.add("bd-button", "bd-button-filled", "bd-button-color-brand", "bd-button-medium", "bd-button-grow");
+
+        changelogButton.addEventListener("click", () => {
+            this.showChangelog();
+        });
+
+        manualupdateButton.addEventListener("click", (event) => {
+            this.CheckifUpdate(true).then(upToDate => {
+                if (upToDate) {
+                    const toast = document.createElement("div");
+                    toast.textContent = "Plugin is Up-to-date";
+                    toast.style.cssText = `
                         position: absolute;
                         left: ${event.clientX - 80}px;
                         top: ${event.clientY - 40}px;
@@ -368,80 +358,82 @@ module.exports = class {
                         pointer-events: none;
                         transition: opacity 0.4s ease-out, transform 0.3s ease-out;
                     `;
-                        document.body.appendChild(toast);
+                    document.body.appendChild(toast);
 
-                        setTimeout(() => {
-                            toast.style.opacity = "0";
-                            toast.style.transform = "translateY(-8px)";
-                            setTimeout(() => toast.remove(), 300);
-                        }, 1300);
-                    }
-                });
-            })
-
-            if (modalFooter && !modalFooter.contains(changelogButton))
-                modalFooter.appendChild(changelogButton);
-            if (modalFooter && !modalFooter.contains(manualupdateButton))
-                modalFooter.appendChild(manualupdateButton);
-    
-            observer.disconnect();
-
-            const doneButton = document.querySelector('.bd-button[type="submit"]');
-            doneButton.addEventListener("click", (event) => {
-                // Update config values
-                config.EnableUpdates = enableUpdatesInput.checked ? 1 : 0;
-                config.SilentUpdates = silentUpdatesInput.checked ? 1 : 0;
-                config.decoration   = enableDecorationsInput.checked ? 1 : 0;
-                config.focushover   = focushoverInput.checked ? 1 : 0;
-                config.imagesize    = parseInt(imageSizeInput.value);
-                config.panelsize    = parseInt(panelSizeInput.value);
-                config.bordersize    = parseInt(borderSizeInput.value);
-    
-                // Update panel sizes instantly
-                const ip = document.querySelector("img.IPH");
-                const dp = document.querySelector("img.DPH");
-    
-                if (ip) {
-                    ip.style.height = `${config.panelsize + config.bordersize}px`;
-                    ip.style.width  = `${config.panelsize + config.bordersize}px`;
-                    ip.style.padding  = `${config.bordersize}px`;
+                    setTimeout(() => {
+                        toast.style.opacity = "0";
+                        toast.style.transform = "translateY(-8px)";
+                        setTimeout(() => toast.remove(), 300);
+                    }, 1300);
                 }
-                if (dp) {
-                    dp.style.height = `${config.panelsize + 60 + config.bordersize}px`;
-                    dp.style.width  = `${config.panelsize + 60 + config.bordersize}px`;
-                    dp.style.padding  = `${config.bordersize}px`;
-                }
-    
-                this.saveConfigToFile();
-    
-                // Toast
-                const toast = document.createElement("div");
-                toast.textContent = "Settings saved!";
-                toast.style.cssText = `
-                    position: absolute;
-                    left: ${event.clientX - 60}px;
-                    top: ${event.clientY - 40}px;
-                    background: rgba(0, 0, 0, 1);
-                    color: white;
-                    padding: 8px 12px;
-                    border-radius: 5px;
-                    border: 1px solid var(--background-brand);
-                    font-size: 14px;
-                    z-index: 9999;
-                    pointer-events: none;
-                    transition: opacity 0.4s ease-out, transform 0.3s ease-out;
-                `;
-                document.body.appendChild(toast);
-    
-                setTimeout(() => {
-                    toast.style.opacity = "0";
-                    toast.style.transform = "translateY(-8px)";
-                    setTimeout(() => toast.remove(), 300);
-                }, 1300);
             });
         });
-    
-        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Save handler (replaces the old "Done" button listener)
+        const saveSettings = (event) => {
+            config.EnableUpdates = enableUpdatesInput.checked ? 1 : 0;
+            config.SilentUpdates = silentUpdatesInput.checked ? 1 : 0;
+            config.decoration   = enableDecorationsInput.checked ? 1 : 0;
+            config.focushover   = focushoverInput.checked ? 1 : 0;
+            config.imagesize    = parseInt(imageSizeInput.value) || config.imagesize;
+            config.panelsize    = parseInt(panelSizeInput.value) || config.panelsize;
+            config.bordersize   = parseInt(borderSizeInput.value) || config.bordersize;
+
+            // Update panel sizes instantly
+            const ip = document.querySelector("img.IPH");
+            const dp = document.querySelector("img.DPH");
+
+            if (ip) {
+                ip.style.height = `${config.panelsize + config.bordersize}px`;
+                ip.style.width  = `${config.panelsize + config.bordersize}px`;
+                ip.style.padding  = `${config.bordersize}px`;
+            }
+            if (dp) {
+                dp.style.height = `${config.panelsize + 60 + config.bordersize}px`;
+                dp.style.width  = `${config.panelsize + 60 + config.bordersize}px`;
+                dp.style.padding  = `${config.bordersize}px`;
+            }
+
+            this.saveConfigToFile();
+
+            // Toast
+            const toast = document.createElement("div");
+            toast.textContent = "Settings saved!";
+            toast.style.cssText = `
+                position: absolute;
+                left: ${event.clientX - 60}px;
+                top: ${event.clientY - 40}px;
+                background: rgba(0, 0, 0, 1);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 5px;
+                border: 1px solid var(--background-brand);
+                font-size: 14px;
+                z-index: 9999;
+                pointer-events: none;
+                transition: opacity 0.4s ease-out, transform 0.3s ease-out;
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = "0";
+                toast.style.transform = "translateY(-8px)";
+                setTimeout(() => toast.remove(), 300);
+            }, 1300);
+        };
+
+        saveButton.addEventListener("click", saveSettings);
+
+        // Optional: also save when number inputs change (for instant size feedback)
+        [imageSizeInput, panelSizeInput, borderSizeInput].forEach(input => {
+            input.addEventListener("change", saveSettings);
+        });
+
+        buttonRow.append(changelogButton, manualupdateButton, saveButton);
+        this.settingsPanel.appendChild(buttonRow);
+
+        // Return the panel so BetterDiscord can display it on the settings page
+        return this.settingsPanel;
     }
     
     saveConfigToFile() {
